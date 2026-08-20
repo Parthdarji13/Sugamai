@@ -1,0 +1,37 @@
+AYUSHMAN BHARAT - PRADHAN MANTRI JAN AROGYA YOJANA (AB-PMJAY)
+Official Portal: https://pmjay.gov.in/
+Source Title: National Health Authority - Ayushman Bharat Portal
+
+Overview:
+Ayushman Bharat PM-JAY is the largest health assurance scheme in the world which aims to provide a health cover of Rs. 5 lakhs per family per year for secondary and tertiary care hospitalization to over 12 crores poor and vulnerable families (approximately 55 crore beneficiaries) that form the bottom 40% of the Indian population.
+
+Benefits:
+- Provides cover of up to Rs. 5,000,000 (Five Lakhs) per family per year for secondary and tertiary care hospitalization.
+- Provides cashless and paperless access to health care services for the beneficiary at the point of service in any empanelled public or private hospital.
+- Covers up to 3 days of pre-hospitalization and 15 days post-hospitalization expenses such as diagnostics and medicines.
+- No restriction on family size, age, or gender.
+- All pre-existing conditions are covered from day one.
+
+Eligibility Criteria (Rural Families):
+Under SECC-2011, rural eligibility is determined based on the following deprivation categories (D1 to D7):
+- D1: Only one room with kucha walls and kucha roof.
+- D2: No adult member between age 16 to 59.
+- D3: Female headed households with no adult male member between age 16 to 59.
+- D4: Disabled member and no able-bodied adult member.
+- D5: Landless households deriving major part of their income from manual casual labour.
+- D7: Scheduled Caste (SC) and Scheduled Tribe (ST) households.
+- Automatically included: Destitute, living on alms, manual scavenger households, primitive tribal groups, legally released bonded labour.
+
+Eligibility Criteria (Urban Families):
+Under SECC-2011, urban eligibility is defined based on 11 occupational categories:
+1. Ragpicker
+2. Beggar
+3. Domestic worker
+4. Street vendor / Cobbler / hawker / Other service provider working on streets
+5. Construction worker / Plumber / Mason / Labor / Painter / Welder / Security guard / Coolie and other head-load worker
+6. Sweeper / Sanitation worker / Mali
+7. Home-based worker / Artisan / Tailor / Handicraft worker
+8. Transport worker / Driver / Conductor / Helper to drivers and conductors / Cart puller / Rickshaw puller
+9. Shop worker / Assistant / Peon in small establishment / Helper / Delivery assistant / Attendant / Waiter
+10. Washerman / Chowkidar
+11. Electrician / Mechanic / Assembler / Repair worker

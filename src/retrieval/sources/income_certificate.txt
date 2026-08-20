@@ -1,0 +1,39 @@
+INCOME CERTIFICATE APPLICATION GUIDELINES
+Official Portal: https://services.india.gov.in/
+Source Title: National Government Services Portal - Income Certificate Guidelines
+
+Overview:
+An Income Certificate is an official document issued by the state government authority that certifies the annual income of an individual or a family from all sources (salary, agriculture, business, pension, rental, etc.). It is widely used to claim scholarships, fee concessions, government subsidies, and access to other social welfare schemes.
+
+Eligibility Criteria:
+- The applicant must be a citizen of India.
+- The applicant must be a resident of the state/union territory where they are applying.
+- The family's combined income from all sources must be declared honestly.
+
+Documents Required:
+1. Proof of Identity: Aadhaar Card, Voter ID Card, PAN Card, or Passport.
+2. Proof of Address: Ration Card, Electricity Bill, Water Bill, or Telephone Bill.
+3. Proof of Income:
+   - For salaried individuals: Form 16, Salary Slip, or Income Tax Return (ITR).
+   - For businessmen/professionals: Self-declaration, ITR, or audit reports.
+   - For farmers/agriculturists: Land revenue records (e.g., 7/12 extract in some states), Talati/Patwari declaration.
+   - For pensioners: Pension payment order (PPO) or bank passbook.
+4. Passport-sized photograph.
+5. Self-declaration affidavit.
+
+Application Process:
+- Online Method:
+  1. Visit the official State e-District portal or Citizen Service Portal (e.g., Digital Gujarat, e-District Delhi, MahaOnline, ServicePlus).
+  2. Register or log in to the portal.
+  3. Search for "Issue of Income Certificate" under revenue services.
+  4. Fill in the application form with personal, address, and income details.
+  5. Upload the scanned copies of required documents and a photograph.
+  6. Pay the nominal processing fee (varies by state, typically Rs. 10 - Rs. 50).
+  7. Submit the application and save the acknowledgment/application number for tracking.
+- Offline Method:
+  1. Visit the local Tahsildar Office, Mamlatdar Office, Revenue Office, or authorized Citizen Service Centre (CSC) / Jan Seva Kendra.
+  2. Obtain and fill out the physical application form.
+  3. Attach self-attested photocopies of all required documents.
+  4. Submit the form to the officer and obtain a receipt.
+  5. The verification is typically done by the local Revenue Inspector or Talati.
+  6. The certificate is issued within 10 to 15 days upon successful verification.
