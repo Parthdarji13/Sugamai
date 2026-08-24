@@ -1,0 +1,38 @@
+PRADHAN MANTRI AWAS YOJANA (PMAY) - HOUSING FOR ALL
+Official Portal: https://pmaymis.gov.in/
+Source Title: PMAY Portal - Ministry of Housing and Urban Affairs
+
+Overview:
+Pradhan Mantri Awas Yojana (PMAY) is a flagship initiative of the Government of India launched to ensure a pucca house for all eligible urban and rural families. The scheme operates through two verticals: PMAY-Urban (PMAY-U) managed by MoHUA, and PMAY-Gramin (PMAY-G) managed by the Ministry of Rural Development.
+
+Key Components & Benefits:
+1. Credit Linked Subsidy Scheme (CLSS): Interest subsidy on home loans for EWS, LIG, and MIG categories buying or constructing their first pucca house.
+2. Beneficiary Led Construction (BLC): Direct financial assistance (typically Rs. 1.5 Lakh to Rs. 2.5 Lakh depending on state/central share) to eligible families owning land to construct a new house.
+3. Affordable Housing in Partnership (AHP): Assistance for affordable housing projects built in partnership with public/private sectors.
+4. In-Situ Slum Redevelopment (ISSR): Rehabilitation of slum dwellers using land as a resource.
+
+Eligibility Criteria:
+- The beneficiary family must not own a pucca house (an all-weather home) anywhere in India in their name or in the name of any family member.
+- Income categories:
+  - Economically Weaker Section (EWS): Annual household income up to Rs. 3 Lakh.
+  - Low Income Group (LIG): Annual household income between Rs. 3 Lakh and Rs. 6 Lakh.
+  - Middle Income Group (MIG-I & MIG-II): Income guidelines specified as per ministry notifications.
+- Preference is given to female ownership or co-ownership of the house.
+
+Documents Required:
+1. Proof of Identity & Age: Aadhaar Card (mandatory), Voter ID, PAN Card.
+2. Proof of Income: Salary slip, Form 16, Income Certificate from Revenue Authority, or Self-declaration affidavit.
+3. Property Documents: Land ownership proof (7/12 extract, registry deed), approved building plan, and site photograph.
+4. Bank Account Details: Aadhaar-linked bank account passbook.
+
+Application Process:
+- For PMAY-Urban:
+  1. Visit official PMAY-U portal (https://pmaymis.gov.in/) or visit nearest Common Service Center (CSC).
+  2. Navigate to 'Citizen Assessment' and select relevant category (e.g. Beneficiary Led Construction).
+  3. Enter Aadhaar number and fill out personal, income, and bank details.
+  4. Submit application and download assessment form for tracking.
+- For PMAY-Gramin:
+  1. Beneficiary selection is based on Housing Deprivation parameters in SECC 2011 data verified by Gram Sabha.
+
+Verification Note:
+Specific subsidy amounts, active CLSS guidelines, and beneficiary lists should be verified on the official portals (https://pmaymis.gov.in/ and https://pmayg.nic.in/).

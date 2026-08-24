@@ -1,0 +1,39 @@
+E-SHRAM CARD - NATIONAL DATABASE OF UNORGANIZED WORKERS (NDUW)
+Official Portal: https://eshram.gov.in/
+Source Title: e-Shram Portal - Ministry of Labour & Employment
+
+Overview:
+e-Shram is a comprehensive national database created by the Ministry of Labour & Employment to register and deliver social security benefits to unorganized workers across India. Registered workers are issued an e-Shram Card containing a unique 12-digit Universal Account Number (UAN).
+
+Eligible Worker Categories:
+Unorganized workers aged between 16 and 59 years, including:
+- Construction workers, plumbers, masons, painters, electricians.
+- Small and marginal farmers, agricultural laborers, sharecroppers.
+- Street vendors, hawkers, rickshaw pullers, coolies, head-load workers.
+- Domestic workers, maids, tailors, weavers, handicraft artisans.
+- Gig and platform workers, delivery agents, drivers.
+
+Key Benefits:
+1. Universal Account Number (UAN): A portable 12-digit identification valid across all states in India.
+2. Accidental Insurance Cover: Rs. 2 Lakh cover in case of accidental death or permanent disability, and Rs. 1 Lakh for partial disability under Pradhan Mantri Suraksha Bima Yojana (PMSBY).
+3. Social Security Scheme Integration: Seamless integration for government welfare schemes (such as PMSYM pension scheme, ration benefits, emergency relief funds during disasters).
+
+Eligibility Exclusions:
+- Workers who are members of EPFO (Employees' Provident Fund) or ESIC (Employees' State Insurance).
+- Individuals who pay Income Tax in the last assessment year.
+- Persons under 16 years or above 59 years of age.
+
+Documents Required:
+1. Aadhaar Card (with active mobile number linked for OTP verification).
+2. Aadhaar-linked Active Bank Account details (Bank Name, Account Number, IFSC Code).
+3. Occupation details and educational qualification proof (optional).
+
+Self-Registration Process:
+1. Visit the official e-Shram portal (https://eshram.gov.in/) and click 'Register on e-Shram'.
+2. Enter Aadhaar-linked mobile number and captcha code, then enter OTP received.
+3. Verify Aadhaar details using OTP/Biometric.
+4. Fill in personal details, address, occupation, educational qualification, and bank details.
+5. Preview and submit the form. Download and print the e-Shram Card instantly.
+
+Verification Note:
+Worker registration is free of cost. Check current registration status and update profile details at the official portal (https://eshram.gov.in/).

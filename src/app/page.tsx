@@ -21,6 +21,7 @@ const UI_TEXT = {
       'SugamGov AI provides information assistance and users should verify important details through the linked official government source.',
     sourceLinkText: 'Access Official Portal',
     badgeLive: 'Verified Real Source',
+    badgeCombined: 'Verified Official Sources',
     badgeCached: 'Verified Local Copy',
     suggestions: [
       'PM Kisan eligibility kya hai?',
@@ -47,6 +48,7 @@ const UI_TEXT = {
       'सुगमगॉव AI सूचना सहायता प्रदान करता है और उपयोगकर्ताओं को लिंक किए गए आधिकारिक सरकारी स्रोत के माध्यम से महत्वपूर्ण विवरणों की पुष्टि करनी चाहिए।',
     sourceLinkText: 'पोर्टल पर जाएं',
     badgeLive: 'आधिकारिक लाइव चेक',
+    badgeCombined: 'सत्यापित आधिकारिक स्रोत',
     badgeCached: 'सत्यापित स्थानीय दस्तावेज़',
     suggestions: [
       'पीएम किसान पात्रता (eligibility) क्या है?',
@@ -73,6 +75,7 @@ const UI_TEXT = {
       'સુગમગવ AI માહિતી સહાય પૂરી પાડે છે અને વપરાશકર્તાઓએ લિંક કરેલ સત્તાવાર સરકારી સ્ત્રોત દ્વારા મહત્વપૂર્ણ વિગતોની ચકાસણી કરવી જોઈએ.',
     sourceLinkText: 'સત્તાવાર પોર્ટલ જુઓ',
     badgeLive: 'સત્તાવાર લાઈવ ચેક',
+    badgeCombined: 'ખરાઈ કરેલ સત્તાવાર સ્ત્રોત',
     badgeCached: 'ચકાસાયેલ સ્થાનિક નકલ',
     suggestions: [
       'પીએમ કિસાન યોજના માટે પાત્રતા શું છે?',
@@ -195,7 +198,7 @@ export default function Home() {
   }, []);
 
   /* ═══════════════════════════════════════════
-     CHAT HANDLER (preserved logic)
+     CHAT HANDLER (preserved logic with stream lifecycle fix)
      ═══════════════════════════════════════════ */
   const handleSend = async (textToSend: string) => {
     if (!textToSend.trim() || isLoading) return;
@@ -211,26 +214,25 @@ export default function Home() {
     setIsLoading(true);
 
     let assistantMsgId = '';
-    let dataReceived = false;
     let clientTimeout: ReturnType<typeof setTimeout> | null = null;
+    let reader: ReadableStreamDefaultReader<Uint8Array> | undefined = undefined;
 
-    try {
+    const resetTimeout = () => {
+      if (clientTimeout) clearTimeout(clientTimeout);
       clientTimeout = setTimeout(() => {
-        if (!dataReceived) {
-          console.warn('Client-side safety timeout reached (20 seconds of silence).');
-          setIsLoading(false);
-          if (assistantMsgId) {
-            setMessages((prev) =>
-              prev.map((m) => (m.id === assistantMsgId ? { ...m, text: text.errorMsg, isSupported: false } : m))
-            );
-          } else {
-            setMessages((prev) => [
-              ...prev,
-              { id: String(++msgIdRef.current), sender: 'assistant', text: text.errorMsg, isSupported: false },
-            ]);
+        console.warn('Client-side stream timeout reached (15 seconds of silence).');
+        if (reader) {
+          try {
+            reader.cancel();
+          } catch {
+            /* ignore cancel error */
           }
         }
-      }, 20000);
+      }, 15000);
+    };
+
+    try {
+      resetTimeout();
 
       const response = await fetch('/api/chat', {
         method: 'POST',
@@ -249,7 +251,7 @@ export default function Home() {
         throw new Error(errorMsgText);
       }
 
-      const reader = response.body?.getReader();
+      reader = response.body?.getReader();
       if (!reader) throw new Error('No readable stream reader available');
 
       const decoder = new TextDecoder();
@@ -265,6 +267,8 @@ export default function Home() {
         const { done, value } = await reader.read();
         if (done) break;
 
+        resetTimeout();
+
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');
         buffer = lines.pop() || '';
@@ -272,12 +276,6 @@ export default function Home() {
         for (const line of lines) {
           if (!line.trim()) continue;
           try {
-            dataReceived = true;
-            if (clientTimeout) {
-              clearTimeout(clientTimeout);
-              clientTimeout = null;
-            }
-
             const data = JSON.parse(line);
 
             if (data.type === 'metadata') {
@@ -310,12 +308,30 @@ export default function Home() {
           }
         }
       }
+
+      // Parse any remaining trailing line in buffer
+      if (buffer.trim()) {
+        try {
+          const data = JSON.parse(buffer.trim());
+          if (data.type === 'chunk') {
+            setMessages((prev) =>
+              prev.map((m) => (m.id === assistantMsgId ? { ...m, text: m.text + data.text } : m))
+            );
+          } else if (data.type === 'error') {
+            setMessages((prev) =>
+              prev.map((m) => (m.id === assistantMsgId ? { ...m, text: data.message, isSupported: false } : m))
+            );
+          }
+        } catch {
+          /* ignore trailing line parse errors */
+        }
+      }
     } catch (error) {
       console.error('Chat interface error:', error);
       const message = (error as Error).message || text.errorMsg;
       if (assistantMsgId) {
         setMessages((prev) =>
-          prev.map((m) => (m.id === assistantMsgId ? { ...m, text: message, isSupported: false } : m))
+          prev.map((m) => (m.id === assistantMsgId ? { ...m, text: m.text || message, isSupported: false } : m))
         );
       } else {
         setMessages((prev) => [
@@ -325,7 +341,15 @@ export default function Home() {
       }
     } finally {
       if (clientTimeout) clearTimeout(clientTimeout);
+      if (reader) {
+        try {
+          reader.releaseLock();
+        } catch {
+          /* ignore release lock error */
+        }
+      }
       setIsLoading(false);
+      setTimeout(() => inputRef.current?.focus(), 50);
     }
   };
 

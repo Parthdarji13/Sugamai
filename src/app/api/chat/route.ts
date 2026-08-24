@@ -1,12 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import fs from 'fs/promises';
-import { matchQueryToSource, hasGenericGovTerms } from '@/retrieval/queryMatcher';
-import { governmentSources, getCachedSourcePath } from '@/retrieval/governmentSources';
-import { extractRelevantContent } from '@/retrieval/contentExtractor';
-
-// Global in-memory cache for live website verification status (cached for 1 hour)
-const liveCheckCache = new Map<string, { ok: boolean; timestamp: number }>();
-const CACHE_DURATION_MS = 60 * 60 * 1000; // 1 hour
+import { retrieveOfficialInfo } from '@/retrieval/sourceManager';
+import { hasGenericGovTerms } from '@/retrieval/queryMatcher';
 
 export async function POST(req: Request) {
   // Start Total Request timer
@@ -30,17 +24,16 @@ export async function POST(req: Request) {
     if (selectedLanguage === 'hi') languageName = 'Hindi';
     if (selectedLanguage === 'gu') languageName = 'Gujarati';
 
-    // 1. Query Matching
-    console.time('query-matching');
-    let source = matchQueryToSource(message);
-    if (!source && lastMatchedSourceId) {
-      source = governmentSources.find(s => s.id === lastMatchedSourceId) || null;
-    }
-    console.timeEnd('query-matching');
+    // 1. Centralized Retrieval (Attempts live GET fetch with 6s timeout, fallback to cached .txt)
+    console.time('retrieval-layer');
+    const retrievalResult = await retrieveOfficialInfo(message, lastMatchedSourceId);
+    console.timeEnd('retrieval-layer');
+
+    const isSupported = retrievalResult.matched;
 
     // If query is unsupported or unmatched, compute rejected answer text
     let rejectedAnswer = "";
-    if (!source) {
+    if (!isSupported) {
       const isGeneric = hasGenericGovTerms(message);
       if (selectedLanguage === 'hi') {
         rejectedAnswer = isGeneric
@@ -57,80 +50,37 @@ export async function POST(req: Request) {
       }
     }
 
-    // 2. Read Cached File if source matches
-    let rawContent = '';
-    if (source) {
-      console.time('read-cached-file');
-      try {
-        const filePath = getCachedSourcePath(source.cachedFileName);
-        rawContent = await fs.readFile(filePath, 'utf-8');
-      } catch (fsError) {
-        console.error(`Failed to read cached official file: ${(fsError as Error).message}`);
-        rawContent = `Error: Official government document for ${source.name} is temporarily unavailable.`;
-      }
-      console.timeEnd('read-cached-file');
-
-      // 3. Live website verification check (asynchronous, non-blocking, cached for 1 hour)
-      const targetUrl = source.officialUrl;
-      const targetName = source.name;
-      const cachedStatus = liveCheckCache.get(targetUrl);
-      const now = Date.now();
-
-      if (cachedStatus && (now - cachedStatus.timestamp < CACHE_DURATION_MS)) {
-        console.log(`[CACHE LOG] Skipping live connection check for ${targetName}; cached status (${cachedStatus.ok ? 'ONLINE' : 'OFFLINE'}) is still valid.`);
-      } else {
-        (async () => {
-          console.time(`live-website-check-${targetName}`);
-          let isOk = false;
-          try {
-            const response = await fetch(targetUrl, {
-              method: 'HEAD',
-              signal: AbortSignal.timeout(2500),
-              headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) SugamGovAI/1.0'
-              }
-            });
-            isOk = response.ok;
-            console.log(`[TIMING] Async live check: Connected to official portal ${targetUrl} successfully.`);
-          } catch (err) {
-            console.warn(`[Live Check Warning] Non-critical check failed/aborted for ${targetName} (${targetUrl}):`, (err as Error).message);
-          }
-          liveCheckCache.set(targetUrl, { ok: isOk, timestamp: Date.now() });
-          console.timeEnd(`live-website-check-${targetName}`);
-        })().catch(unhandledErr => {
-          console.error('[CRITICAL ASYNC CHECK ERROR]:', unhandledErr);
-        });
-      }
-    }
-
-    // Extract relevant paragraphs
-    const relevantContent = source ? extractRelevantContent(rawContent, message) : '';
+    const relevantContent = retrievalResult.content;
 
     const apiKey = process.env.GEMINI_API_KEY;
     const runInDemoMode = !apiKey || apiKey.trim() === '' || apiKey === 'your_key_here';
 
     let demoAnswer = '';
-    if (source && runInDemoMode) {
+    if (isSupported && runInDemoMode) {
       console.warn('GEMINI_API_KEY is not set in environment variables. Running in Demo Mode.');
       if (selectedLanguage === 'hi') {
-        demoAnswer = `**[डेमो मोड - जीमिनी API कुंजी कॉन्फ़िगर नहीं है]**\n\nयहाँ **${source.name}** के बारे में आधिकारिक जानकारी दी गई है:\n\n${relevantContent}\n\n*कृपया इस प्रोजेक्ट को चलाने के लिए \`frontend/.env.local\` में अपनी \`GEMINI_API_KEY\` जोड़ें।*`;
+        demoAnswer = `**[डेमो मोड - जीमिनी API कुंजी कॉन्फ़िगर नहीं है]**\n\nयहाँ **${retrievalResult.serviceName || 'सरकारी योजना'}** के बारे में आधिकारिक जानकारी दी गई है:\n\n${relevantContent}\n\n*कृपया इस प्रोजेक्ट को चलाने के लिए \`frontend/.env.local\` में अपनी \`GEMINI_API_KEY\` जोड़ें।*`;
       } else if (selectedLanguage === 'gu') {
-        demoAnswer = `**[ડેમો મોડ - જેમિની API કી સેટ નથી]**\n\nઅહીં **${source.name}** વિશેની સત્તાવાર માહિતી છે:\n\n${relevantContent}\n\n*કૃપા કરીને આ પ્રોજેક્ટ ચલાવવા માટે \`frontend/.env.local\` માં તમારી \`GEMINI_API_KEY\` ઉમેરો.*`;
+        demoAnswer = `**[ડેમો મોડ - જેમિની API કી સેટ નથી]**\n\nઅહીં **${retrievalResult.serviceName || 'સરકારી યોજના'}** વિશેની સત્તાવાર માહિતી છે:\n\n${relevantContent}\n\n*કૃપા કરીને આ પ્રોજેક્ટ ચલાવવા માટે \`frontend/.env.local\` માં તમારી \`GEMINI_API_KEY\` ઉમેરો.*`;
       } else {
-        demoAnswer = `**[Demo Mode - Gemini API Key Not Configured]**\n\nHere is the official information retrieved for **${source.name}**:\n\n${relevantContent}\n\n*Please add your \`GEMINI_API_KEY\` in \`frontend/.env.local\` to run the live AI summarizer.*`;
+        demoAnswer = `**[Demo Mode - Gemini API Key Not Configured]**\n\nHere is the official information retrieved for **${retrievalResult.serviceName || 'Government Scheme'}**:\n\n${relevantContent}\n\n*Please add your \`GEMINI_API_KEY\` in \`frontend/.env.local\` to run the live AI summarizer.*`;
       }
     }
 
-    const systemPrompt = source ? `You are SugamGov AI, an intelligent government service assistant.
+    const sourceHeading = retrievalResult.retrievalMethod === 'live_fetch_with_cached_context'
+      ? 'Here is the VERIFIED information retrieved from official government sources (combining live portal updates and verified official guidelines):'
+      : 'Here is the VERIFIED information retrieved from the official government source:';
+
+    const systemPrompt = isSupported ? `You are SugamGov AI, an intelligent government service assistant.
 Your goal is to answer the citizen's question accurately.
 
-Here is the VERIFIED information retrieved from the official government source:
+${sourceHeading}
 ---
 ${relevantContent}
 ---
 
-Official Source: ${source.sourceTitle}
-Source Link: ${source.officialUrl}
+Official Source: ${retrievalResult.sourceTitle}
+Source Link: ${retrievalResult.sourceUrl}
 
 Instructions:
 1. Answer the user's question ONLY using the verified information provided above.
@@ -141,9 +91,9 @@ Instructions:
 6. Keep the answer structured and clean. Provide a complete, detailed answer covering eligibility, documents required, and the application process in full. Use bolding and markdown lists.
 ` : '';
 
-    // 4. Strictly Timed 18-Second Cascade Handshake (No Retries or Backoffs)
+    // Strictly Timed 18-Second Cascade Handshake (No Retries or Backoffs)
     let result = null;
-    if (source && !runInDemoMode) {
+    if (isSupported && !runInDemoMode) {
       const genAI = new GoogleGenerativeAI(apiKey!);
       let lastError: Error | null = null;
 
@@ -237,7 +187,7 @@ Instructions:
           if (selectedLanguage === 'hi') {
             errorText = "एआई सहायक अत्यधिक मांग के कारण अस्थायी रूप से व्यस्त है। कृपया कुछ क्षणों में फिर से पूछने का प्रयास करें।";
           } else if (selectedLanguage === 'gu') {
-            errorText = "AI સહાયક વધુ માંગને કારણે કામચલાઉ વ્યસ્ત છે. કૃપા કરીને થોડી ક્ષણો પછી ફરીથી પૂછવાનો પ્રયાસ કરો.";
+            errorText = "AI સહાયક વધુ માંગને કારણે કામચલાઉ વ્યસ્ત છે. કૃપા કરીને થોડી ક્ષણો પછી ફરીથી પૂછવાનો પ્રયાસ કરો।";
           } else {
             errorText = "The AI assistant is temporarily busy due to high demand. Please try asking again in a moment.";
           }
@@ -245,7 +195,7 @@ Instructions:
           if (selectedLanguage === 'hi') {
             errorText = "एआई सहायक अस्थायी रूप से अनुपलब्ध है। कृपया फिर से पूछने का प्रयास करें।";
           } else if (selectedLanguage === 'gu') {
-            errorText = "AI સહાયક કામચલાઉ અનુપલબ્ધ છે. કૃપા કરીને ફરીથી પૂછવાનો પ્રયાસ કરો.";
+            errorText = "AI સહાયક કામચલાઉ અનુપલબ્ધ છે. કૃપા કરીને ફરીથી પૂછવાનો પ્રયાસ કરો।";
           }
         }
 
@@ -271,7 +221,7 @@ Instructions:
         };
 
         // If no source matches
-        if (!source) {
+        if (!isSupported) {
           sendJSON({
             type: 'metadata',
             officialSource: 'SugamGov AI System',
@@ -290,11 +240,11 @@ Instructions:
         // Send metadata first
         sendJSON({
           type: 'metadata',
-          officialSource: source.sourceTitle,
-          sourceUrl: source.officialUrl,
-          retrievalMethod: 'cached_official_fallback',
+          officialSource: retrievalResult.sourceTitle,
+          sourceUrl: retrievalResult.sourceUrl,
+          retrievalMethod: retrievalResult.retrievalMethod,
           isSupported: true,
-          serviceId: source.id
+          serviceId: retrievalResult.serviceId
         });
 
         // If Demo Mode

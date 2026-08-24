@@ -1,0 +1,38 @@
+NATIONAL SCHOLARSHIP PORTAL (NSP) GUIDELINES
+Official Portal: https://scholarships.gov.in/
+Source Title: National Scholarship Portal - Ministry of Electronics & IT
+
+Overview:
+National Scholarship Portal (NSP) is a one-stop digital platform introduced by the Government of India to streamline scholarship applications, verification, and Direct Benefit Transfer (DBT) disbursement for students across Central Government Ministries, State Education Departments, and AICTE/UGC schemes.
+
+Major Scholarship Categories:
+1. Central Sector Schemes: Offered by Ministry of Social Justice, Ministry of Tribal Affairs, Ministry of Minority Affairs, Department of Higher Education, and Department of School Education.
+2. UGC / AICTE Schemes: Technical and professional education scholarships for single girl child, PG scholarship, and Pragati/Saksham schemes.
+3. State Schemes: State-specific pre-matric and post-matric financial assistance for SC, ST, OBC, EBC, and PwD students.
+
+Eligibility Criteria:
+- Applicant must be an Indian citizen enrolled in a recognized school, college, university, or institute in India.
+- Minimum academic marks (e.g. 50% or 60% in previous qualifying exam) as specified by individual scheme guidelines.
+- Annual family income limits vary by scheme (typically up to Rs. 1 Lakh for Pre-Matric, Rs. 2.5 Lakh for Post-Matric, or up to Rs. 8 Lakh for Top Class Education).
+
+Documents Required for Application:
+1. Aadhaar Card / Aadhaar Enrolment Slip (mandatory for DBT payment).
+2. Student Bank Passbook (account linked with Aadhaar and active for DBT).
+3. Educational Certificates: Marksheets of previous passed examination.
+4. Income Certificate: Issued by designated State Revenue Authority (Tahsildar/Mamlatdar).
+5. Caste / Category Certificate (SC/ST/OBC/Minority) where applicable.
+6. Bonafide Student Certificate issued by the current Institute/School.
+7. Fee receipt of current academic year.
+
+Application Process:
+1. Visit official NSP portal (https://scholarships.gov.in/).
+2. Click 'New Registration' and complete One Time Registration (OTR) using Aadhaar-linked mobile.
+3. Obtain OTR ID and password via SMS.
+4. Log in to student portal and select appropriate scholarship scheme based on eligibility.
+5. Fill personal, academic, fee, and bank details.
+6. Upload scanned copies of required documents and submit application.
+7. Application undergoes 2-tier online verification: first by Institute Nodal Officer (INO), followed by District/State Nodal Officer (DNO/SNO).
+8. Verified funds are transferred directly into student bank accounts via Aadhaar Payment Bridge (APB).
+
+Verification Note:
+Scheme application open dates, income ceilings, and verification deadlines should be verified on the official NSP portal (https://scholarships.gov.in/).

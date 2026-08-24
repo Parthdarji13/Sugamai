@@ -1,0 +1,36 @@
+NATIONAL FOOD SECURITY ACT (NFSA) - RATION CARD GUIDELINES
+Official Portal: https://nfsa.gov.in/
+Source Title: National Food Security Portal - Department of Food & Public Distribution
+
+Overview:
+Under the National Food Security Act (NFSA), 2013, the Government of India provides subsidized and free foodgrains (wheat, rice, coarse grains) to over 80 crore beneficiaries across urban and rural areas through the Targeted Public Distribution System (TPDS). Ration cards are official documents issued by State Food and Civil Supplies Departments to enable eligible households to claim their entitlements from designated Fair Price Shops (FPS).
+
+Ration Card Categories:
+1. Antyodaya Anna Yojana (AAY): Issued to the poorest of the poor households. Entitled to 35 kg of foodgrains per family per month.
+2. Priority Households (PHH): Issued to eligible low-income households as per state criteria. Entitled to 5 kg of foodgrains per person per month.
+3. Non-NFSA / General Ration Cards: Issued by state governments for identification and non-subsidized PDS access.
+
+Eligibility Criteria:
+- Applicant must be an Indian citizen.
+- Neither the applicant nor any family member should already possess a active Ration Card in the state.
+- Income eligibility limits vary by state and category (AAY households include landless laborers, marginal farmers, widows, disabled heads of house, and destitute persons).
+
+Documents Required for Application:
+1. Proof of Identity: Aadhaar Card (mandatory for all family members), Voter ID, or PAN Card.
+2. Proof of Address: Electricity bill, Water bill, House rent agreement, or Bank passbook.
+3. Family Details: Passport-sized photograph of the female head of the family, income certificate, and caste certificate (if applicable).
+
+Application Process:
+- Online Method:
+  1. Visit the state Food and Civil Supplies portal (or access links via https://nfsa.gov.in/).
+  2. Register using mobile number and Aadhaar.
+  3. Fill out the new Ration Card application form with family member details and address.
+  4. Upload scanned copies of required documents and submit.
+  5. Save the application reference number to track verification status.
+- Offline Method:
+  1. Visit the local Ration Office / Food Inspector Office / CSC Center.
+  2. Collect and submit the physical application form along with self-attested documents.
+  3. Physical inspection/verification is carried out by the local Food Inspector before card generation.
+
+Verification Note:
+Entitlements, monthly quotas, and state e-Ration Card procedures should be verified directly on the official NFSA portal (https://nfsa.gov.in/) or respective State Food Department portals.

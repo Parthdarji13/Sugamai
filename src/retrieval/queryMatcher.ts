@@ -1,7 +1,7 @@
 import { governmentSources, GovernmentSource } from './governmentSources';
 
 /**
- * Normalizes a text string by converting it to lowercase and removing special characters.
+ * Normalizes a text string by converting it to lowercase and removing punctuation/special characters.
  */
 function normalizeText(text: string): string {
   return text
@@ -12,12 +12,84 @@ function normalizeText(text: string): string {
 }
 
 /**
- * Matches a user query to a government source based on keyword frequency and weightings.
- * Returns the matched GovernmentSource or null if no source meets the confidence threshold.
+ * Calculates Levenshtein edit distance between two strings.
+ */
+function levenshteinDistance(str1: string, str2: string): number {
+  const len1 = str1.length;
+  const len2 = str2.length;
+  const matrix: number[][] = [];
+
+  for (let i = 0; i <= len1; i++) {
+    matrix[i] = [i];
+  }
+  for (let j = 0; j <= len2; j++) {
+    matrix[0][j] = j;
+  }
+
+  for (let i = 1; i <= len1; i++) {
+    for (let j = 1; j <= len2; j++) {
+      const cost = str1[i - 1] === str2[j - 1] ? 0 : 1;
+      matrix[i][j] = Math.min(
+        matrix[i - 1][j] + 1,
+        matrix[i][j - 1] + 1,
+        matrix[i - 1][j - 1] + cost
+      );
+    }
+  }
+  return matrix[len1][len2];
+}
+
+/**
+ * Multilingual intent phrase mapping for extra contextual scoring boost (+6).
+ */
+const INTENT_PHRASES: Record<string, string[]> = {
+  pm_kisan: [
+    'farmer money', 'paisa kab milega', 'kisan kist', 'farmer installment', 'kheti ka paisa', 'kisan paisa'
+  ],
+  ayushman_bharat: [
+    'health card', '5 lakh treatment', '5 lakh bima', 'hospital card', 'free hospital treatment', 'health insurance for poor'
+  ],
+  income_certificate: [
+    'income certificate documents', 'income proof documents', 'aavak cert', 'saalana aana dakhla'
+  ],
+  nfsa_ration_card: [
+    'ration card documents', 'rashan card kaise banaye', 'free ration', 'bpl card apply', 'free anaj'
+  ],
+  pm_awas_yojana: [
+    'ghar ke liye scheme', 'ghar ke liye government scheme', 'makan ke liye paisa', 'home subsidy', 'ghar yojana'
+  ],
+  eshram_card: [
+    'labour card', 'worker card', 'shramik card', 'majdoor card', 'labour card documents'
+  ],
+  passport_seva: [
+    'passport documents', 'passport renew kaise kare', 'tatkal passport', 'new passport apply'
+  ],
+  pm_mudra_yojana: [
+    'business loan government', 'small business loan', 'dukan ke liye loan', 'shishu loan apply'
+  ],
+  national_scholarships: [
+    'student scholarship', 'post matric scholarship', 'pre matric scholarship', 'padhai ke liye paisa'
+  ]
+};
+
+const GENERIC_TERMS = new Set([
+  // English
+  'certificate', 'yojana', 'scheme', 'eligibility', 'eligible', 'apply', 'documents', 'government', 'gov', 'service', 'today', 'weather', 'restaurant', 'poem', 'write',
+  // Hindi
+  'योजना', 'प्रमाण पत्र', 'सर्टिफिकेट', 'पात्रता', 'लागू', 'दस्तावेज', 'सरकारी', 'सेवा', 'अप्लाई',
+  // Gujarati
+  'યોજના', 'પ્રમાણપત્ર', 'દાખલો', 'પાત્રતા', 'લાગુ', 'દસ્તાવેજો', 'સરકારી', 'સેવા', 'અરજી'
+]);
+
+/**
+ * Matches a user query to a government source using data-driven aliases,
+ * intent phrase boosts, keyword matching, and selective fuzzy edit-distance matching.
  */
 export function matchQueryToSource(query: string): GovernmentSource | null {
   const normalizedQuery = normalizeText(query);
   if (!normalizedQuery) return null;
+
+  const queryWords = normalizedQuery.split(' ').filter(w => w.length > 3 && !GENERIC_TERMS.has(w));
 
   let bestSource: GovernmentSource | null = null;
   let highestScore = 0;
@@ -25,36 +97,62 @@ export function matchQueryToSource(query: string): GovernmentSource | null {
   for (const source of governmentSources) {
     let score = 0;
 
-    // Direct scheme name matches (highest weight)
-    if (source.id === 'pm_kisan') {
-      if (normalizedQuery.includes('pm kisan') || normalizedQuery.includes('pm-kisan') || normalizedQuery.includes('pmkisan')) {
-        score += 15;
-      }
-    } else if (source.id === 'ayushman_bharat') {
-      if (normalizedQuery.includes('ayushman') || normalizedQuery.includes('pmjay') || normalizedQuery.includes('pm-jay') || normalizedQuery.includes('pm jay')) {
-        score += 15;
-      }
-    } else if (source.id === 'income_certificate') {
-      if (
-        normalizedQuery.includes('income certificate') || 
-        normalizedQuery.includes('income cert') || 
-        normalizedQuery.includes('आय प्रमाण') || 
-        normalizedQuery.includes('આવકનું પ્રમાણ') ||
-        normalizedQuery.includes('આવક દાખલો') ||
-        normalizedQuery.includes('આવક નો દાખલો')
-      ) {
-        score += 15;
+    // 1. Data-Driven Alias Matching (+15 for exact alias substring match)
+    if (source.aliases) {
+      for (const alias of source.aliases) {
+        const normAlias = normalizeText(alias);
+        if (normAlias && normalizedQuery.includes(normAlias)) {
+          score += 15;
+          break; // Avoid multi-counting aliases for the same source
+        }
       }
     }
 
-    // Keyword overlap matching
+    // 2. Intent Phrase Boost (+6)
+    const intents = INTENT_PHRASES[source.id] || [];
+    for (const intent of intents) {
+      if (normalizedQuery.includes(intent)) {
+        score += 6;
+        break;
+      }
+    }
+
+    // 3. Keyword Matching (+2 per word)
     for (const keyword of source.keywords) {
-      const normalizedKeyword = keyword.toLowerCase();
-      // Check if keyword is a separate word or exact substring in the query
-      if (normalizedKeyword && normalizedQuery.includes(normalizedKeyword)) {
-        // If it's a multi-word keyword (like 'income certificate' or 'pm kisan') and already matched above,
-        // give it slightly less weight to avoid double counting, otherwise count it
-        score += normalizedKeyword.split(' ').length * 2;
+      const normKeyword = normalizeText(keyword);
+      if (!normKeyword) continue;
+      
+      // For short single-word keywords (<= 4 chars), require exact word boundary to prevent substring false positives
+      if (normKeyword.length <= 4) {
+        const regex = new RegExp(`\\b${normKeyword}\\b`, 'i');
+        if (regex.test(normalizedQuery)) {
+          score += 2;
+        }
+      } else if (normalizedQuery.includes(normKeyword)) {
+        score += normKeyword.split(' ').length * 2;
+      }
+    }
+
+    // 4. Selective Fuzzy Matching (run only if exact alias score < 10)
+    if (score < 10 && queryWords.length > 0 && source.aliases) {
+      let fuzzyMatchFound = false;
+      for (const queryWord of queryWords) {
+        for (const alias of source.aliases) {
+          const aliasWords = normalizeText(alias).split(' ').filter(w => w.length > 4);
+          for (const aliasWord of aliasWords) {
+            // Check Levenshtein distance for words > 4 characters
+            if (Math.abs(queryWord.length - aliasWord.length) <= 1) {
+              const distance = levenshteinDistance(queryWord, aliasWord);
+              if (distance <= 1) {
+                score += 8; // Medium fuzzy match bonus
+                fuzzyMatchFound = true;
+                break;
+              }
+            }
+          }
+          if (fuzzyMatchFound) break;
+        }
+        if (fuzzyMatchFound) break;
       }
     }
 
@@ -64,24 +162,15 @@ export function matchQueryToSource(query: string): GovernmentSource | null {
     }
   }
 
-  // Threshold: at least a score of 2 is required to match (e.g. at least one keyword match)
-  const MIN_THRESHOLD = 2;
+  // Threshold: at least a score of 3 is required to guarantee match confidence
+  const MIN_THRESHOLD = 3;
   return highestScore >= MIN_THRESHOLD ? bestSource : null;
 }
-
-const GENERIC_TERMS = [
-  // English
-  'certificate', 'yojana', 'scheme', 'eligibility', 'eligible', 'apply', 'documents', 'government', 'gov', 'service',
-  // Hindi
-  'योजना', 'प्रमाण पत्र', 'सर्टिफिकेट', 'पात्रता', 'लागू', 'दस्तावेज', 'सरकारी', 'सेवा', 'अप्लाई',
-  // Gujarati
-  'યોજના', 'પ્રમાણપત્ર', 'દાખલો', 'પાત્રતા', 'લાગુ', 'દસ્તાવેજો', 'સરકારી', 'સેવા', 'અરજી'
-];
 
 /**
  * Checks if the query contains generic government terms.
  */
 export function hasGenericGovTerms(query: string): boolean {
   const normalizedQuery = query.toLowerCase();
-  return GENERIC_TERMS.some(term => normalizedQuery.includes(term));
+  return Array.from(GENERIC_TERMS).some(term => normalizedQuery.includes(term));
 }

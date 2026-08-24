@@ -4,7 +4,7 @@ export interface Message {
     text: string;
     sourceName?: string;
     sourceUrl?: string;
-    retrievalMethod?: 'live_fetch' | 'cached_official_fallback' | 'unmatched_default';
+    retrievalMethod?: 'live_fetch' | 'live_fetch_with_cached_context' | 'cached_official_fallback' | 'unmatched_default';
     isSupported?: boolean;
 }
 

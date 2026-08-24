@@ -8,6 +8,7 @@ interface MessageBubbleProps {
     text: {
         sourceLinkText: string;
         badgeLive: string;
+        badgeCombined?: string;
         badgeCached: string;
     };
     assistantLabel: string;
@@ -84,6 +85,11 @@ export default function MessageBubble({ message, text, assistantLabel, userLabel
                                 <span className="verified-badge">
                                     <span className="pulse-dot h-1.5 w-1.5 rounded-full" style={{ background: 'var(--accent)' }} />
                                     {text.badgeLive}
+                                </span>
+                            ) : message.retrievalMethod === 'live_fetch_with_cached_context' ? (
+                                <span className="inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider" style={{ background: 'rgba(16, 185, 129, 0.08)', color: '#10B981', borderColor: 'rgba(16, 185, 129, 0.2)' }}>
+                                    <span className="pulse-dot h-1.5 w-1.5 rounded-full" style={{ background: '#10B981' }} />
+                                    {text.badgeCombined || 'Verified Official Sources'}
                                 </span>
                             ) : (
                                 <span
