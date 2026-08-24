@@ -19,9 +19,9 @@ export async function POST(req: Request) {
 
     if (!message || message.trim() === '') {
       console.timeEnd('total-request');
-      return new Response(JSON.stringify({ error: 'Message cannot be empty' }), { 
-        status: 400, 
-        headers: { 'Content-Type': 'application/json' } 
+      return new Response(JSON.stringify({ error: 'Message cannot be empty' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
       });
     }
 
@@ -75,7 +75,7 @@ export async function POST(req: Request) {
       const targetName = source.name;
       const cachedStatus = liveCheckCache.get(targetUrl);
       const now = Date.now();
-      
+
       if (cachedStatus && (now - cachedStatus.timestamp < CACHE_DURATION_MS)) {
         console.log(`[CACHE LOG] Skipping live connection check for ${targetName}; cached status (${cachedStatus.ok ? 'ONLINE' : 'OFFLINE'}) is still valid.`);
       } else {
@@ -83,8 +83,8 @@ export async function POST(req: Request) {
           console.time(`live-website-check-${targetName}`);
           let isOk = false;
           try {
-            const response = await fetch(targetUrl, { 
-              method: 'HEAD', 
+            const response = await fetch(targetUrl, {
+              method: 'HEAD',
               signal: AbortSignal.timeout(2500),
               headers: {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) SugamGovAI/1.0'
@@ -143,16 +143,14 @@ Instructions:
 
     // 4. Strictly Timed 18-Second Cascade Handshake (No Retries or Backoffs)
     let result = null;
-    let finalModelName = '';
     if (source && !runInDemoMode) {
       const genAI = new GoogleGenerativeAI(apiKey!);
       let lastError: Error | null = null;
 
-      // Model 1: Try gemini-3.6-flash first with a 10-second timeout
       const firstModelName = 'gemini-3.6-flash';
       try {
         console.log(`[STREAM LOG] Cascade Attempt 1: Trying model: ${firstModelName} with 10s timeout`);
-        const model = genAI.getGenerativeModel({ 
+        const model = genAI.getGenerativeModel({
           model: firstModelName,
           systemInstruction: systemPrompt
         });
@@ -167,13 +165,12 @@ Instructions:
 
         result = await Promise.race([
           streamPromise,
-          new Promise<never>((_, reject) => 
+          new Promise<never>((_, reject) =>
             setTimeout(() => reject(new Error('Connection timed out: 10 seconds of silence')), 10000)
           )
         ]);
 
         console.log(`[STREAM LOG] Gemini connection established successfully using model ${firstModelName}`);
-        finalModelName = firstModelName;
       } catch (err) {
         lastError = err as Error;
         console.warn(`[STREAM LOG] Model ${firstModelName} failed: ${lastError.message}`);
@@ -188,7 +185,7 @@ Instructions:
 
         try {
           console.log(`[STREAM LOG] Cascade Attempt 2: Trying model: ${secondModelName} with ${timeoutForSecondModel}ms timeout`);
-          const model = genAI.getGenerativeModel({ 
+          const model = genAI.getGenerativeModel({
             model: secondModelName,
             systemInstruction: systemPrompt
           });
@@ -203,13 +200,12 @@ Instructions:
 
           result = await Promise.race([
             streamPromise,
-            new Promise<never>((_, reject) => 
+            new Promise<never>((_, reject) =>
               setTimeout(() => reject(new Error(`Connection timed out: ${timeoutForSecondModel}ms of silence`)), timeoutForSecondModel)
             )
           ]);
 
           console.log(`[STREAM LOG] Gemini connection established successfully using model ${secondModelName}`);
-          finalModelName = secondModelName;
         } catch (err) {
           lastError = err as Error;
           console.error(`[STREAM LOG] Fallback model ${secondModelName} also failed: ${lastError.message}`);
@@ -223,10 +219,10 @@ Instructions:
         const isTimeout = errMsg.includes('timed out');
         const is503 = errMsg.includes('503') || errMsg.toLowerCase().includes('service unavailable') || errMsg.toLowerCase().includes('busy') || errMsg.toLowerCase().includes('overloaded');
         const is429 = errMsg.includes('429') || errMsg.toLowerCase().includes('rate limit') || errMsg.toLowerCase().includes('quota');
-        
+
         let errorStatus = 500;
         let errorText = "The AI assistant is temporarily unavailable. Please try asking again.";
-        
+
         if (isTimeout) {
           errorStatus = 504;
           if (selectedLanguage === 'hi') {
@@ -266,10 +262,10 @@ Instructions:
       async start(controller) {
         const encoder = new TextEncoder();
 
-        const sendJSON = (data: any) => {
+        const sendJSON = (data: Record<string, unknown>) => {
           try {
             controller.enqueue(encoder.encode(JSON.stringify(data) + '\n'));
-          } catch (e) {
+          } catch {
             // Stream may already be closed
           }
         };
@@ -328,7 +324,7 @@ Instructions:
             clearTimeout(silenceTimeout);
             const text = chunk.text();
             sendJSON({ type: 'chunk', text });
-            
+
             silenceTimeout = setTimeout(() => {
               controller.error(new Error('Connection timed out: 20 seconds of silence'));
             }, 20000);
@@ -362,7 +358,7 @@ Instructions:
     console.error('Error in chat API route:', error);
     try {
       console.timeEnd('total-request');
-    } catch (_) {}
+    } catch { }
     return new Response(JSON.stringify({ error: 'Internal Server Error', details: (error as Error).message }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }

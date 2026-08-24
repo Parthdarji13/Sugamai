@@ -1,4 +1,4 @@
-const http = require('http');
+import http from 'http';
 
 const postData = JSON.stringify({
   message: 'pm kisan eligibility kya hai?',
@@ -32,7 +32,7 @@ const req = http.request(options, (res) => {
       try {
         const parsed = JSON.parse(line);
         console.log(JSON.stringify(parsed, null, 2));
-      } catch (err) {
+      } catch {
         console.log('Raw text:', line);
       }
     }
