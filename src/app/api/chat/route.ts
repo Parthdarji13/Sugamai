@@ -148,10 +148,10 @@ Instructions:
       const genAI = new GoogleGenerativeAI(apiKey!);
       let lastError: Error | null = null;
 
-      // Model 1: Try gemini-3.6-flash first with an 8-second timeout
+      // Model 1: Try gemini-3.6-flash first with a 10-second timeout
       const firstModelName = 'gemini-3.6-flash';
       try {
-        console.log(`[STREAM LOG] Cascade Attempt 1: Trying model: ${firstModelName} with 8s timeout`);
+        console.log(`[STREAM LOG] Cascade Attempt 1: Trying model: ${firstModelName} with 10s timeout`);
         const model = genAI.getGenerativeModel({ 
           model: firstModelName,
           systemInstruction: systemPrompt
@@ -168,7 +168,7 @@ Instructions:
         result = await Promise.race([
           streamPromise,
           new Promise<never>((_, reject) => 
-            setTimeout(() => reject(new Error('Connection timed out: 8 seconds of silence')), 8000)
+            setTimeout(() => reject(new Error('Connection timed out: 10 seconds of silence')), 10000)
           )
         ]);
 
@@ -179,9 +179,9 @@ Instructions:
         console.warn(`[STREAM LOG] Model ${firstModelName} failed: ${lastError.message}`);
       }
 
-      // Model 2: If first model fails, try gemini-flash-latest with remaining-time budget (min 8s)
+      // Model 2: If first model fails, try gemini-3.5-flash with remaining-time budget (min 8s)
       if (!result) {
-        const secondModelName = 'gemini-flash-latest';
+        const secondModelName = 'gemini-3.5-flash';
         const elapsed = Date.now() - requestStart;
         const remaining = TOTAL_BUDGET_MS - elapsed;
         const timeoutForSecondModel = Math.max(remaining, 8000);
