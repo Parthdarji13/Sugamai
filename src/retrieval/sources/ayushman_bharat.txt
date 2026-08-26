@@ -6,11 +6,12 @@ Overview:
 Ayushman Bharat PM-JAY is the largest health assurance scheme in the world which aims to provide a health cover of Rs. 5 lakhs per family per year for secondary and tertiary care hospitalization to over 12 crores poor and vulnerable families (approximately 55 crore beneficiaries) that form the bottom 40% of the Indian population.
 
 Benefits:
-- Provides cover of up to Rs. 5,000,000 (Five Lakhs) per family per year for secondary and tertiary care hospitalization.
-- Provides cashless and paperless access to health care services for the beneficiary at the point of service in any empanelled public or private hospital.
-- Covers up to 3 days of pre-hospitalization and 15 days post-hospitalization expenses such as diagnostics and medicines.
+- Provides cover of up to Rs. 5,00,000 (Five Lakhs) per family per year for secondary and tertiary care hospitalization.
+- Provides cashless and paperless access to health care services for the beneficiary at the point of service in any empanelled public or private hospital across India.
+- Covers up to 3 days of pre-hospitalization and 15 days post-hospitalization expenses such as diagnostics, medicines, and consultation.
 - No restriction on family size, age, or gender.
-- All pre-existing conditions are covered from day one.
+- All pre-existing medical conditions are covered from day one.
+- Coverage Reset: The ₹5 Lakh health insurance cover resets automatically every financial year for eligible family beneficiaries.
 
 Eligibility Criteria (Rural Families):
 Under SECC-2011, rural eligibility is determined based on the following deprivation categories (D1 to D7):
@@ -35,3 +36,34 @@ Under SECC-2011, urban eligibility is defined based on 11 occupational categorie
 9. Shop worker / Assistant / Peon in small establishment / Helper / Delivery assistant / Attendant / Waiter
 10. Washerman / Chowkidar
 11. Electrician / Mechanic / Assembler / Repair worker
+
+Senior Citizens (Aged 70+):
+- All senior citizens aged 70 years and above are eligible for dedicated health insurance cover of ₹5 Lakh per year under the expanded Ayushman Bharat scheme, regardless of socio-economic status.
+
+Documents Required:
+To verify eligibility and generate an Ayushman Card (PM-JAY Golden Card), beneficiaries need:
+1. Aadhaar Card: Primary identification document mandatory for biometric / OTP-based e-KYC authentication.
+2. Ration Card / Family ID: Proof of family composition and SECC database linkage.
+3. Active Mobile Number: Required for receiving OTP during authentication and card download.
+4. Government Photo ID (Voter ID / Driving License) in case of auxiliary verification.
+
+How to Apply & How to Get Ayushman Card (Application Process):
+Eligible beneficiaries can obtain their Ayushman Card through any of the following methods:
+1. Online via Beneficiary Portal (https://beneficiary.nha.gov.in/) or Ayushman App:
+   - Visit https://beneficiary.nha.gov.in/ or open the official Ayushman App.
+   - Login with your mobile number and authenticate via OTP.
+   - Select your State, Scheme (PMJAY), and search by Aadhaar Number, Family ID, or PMJAY ID.
+   - Complete e-KYC using Aadhaar OTP, Fingerprint, or Face Authentication.
+   - Download and print the generated Ayushman Card.
+2. Offline at Empanelled Hospital (Ayushman Mitra Help Desk):
+   - Visit any empanelled public or private hospital.
+   - Meet the Ayushman Mitra at the dedicated Ayushman help desk.
+   - Provide your Aadhaar Card and Ration Card to verify eligibility and generate the card on the spot.
+3. Offline at Common Service Center (CSC / Jan Seva Kendra):
+   - Visit the nearest CSC with Aadhaar card and Ration card.
+   - The CSC operator will perform e-KYC and issue the Ayushman Card.
+
+Scheme Duration, Validity & Last Date:
+- Last Date / Application Deadline: There is NO last date or closing deadline for Ayushman Bharat (AB-PMJAY). It is a continuous, permanent national health scheme of the Government of India.
+- Scheme Validity & Registration: Eligible citizens and senior citizens (aged 70+) can apply for and generate their Ayushman Card at any time throughout the year.
+- Benefit Portability: The Ayushman card is portable across all empanelled hospitals in India.

@@ -32,3 +32,7 @@ Application Process:
 
 Verification Note:
 Fee structures, Tatkaal rules, and appointment availability should be verified directly on the official portal (https://www.passportindia.gov.in/).
+
+Scheme Duration, Validity & Last Date:
+- Last Date / Application Deadline: There is NO last date or application deadline for Passport Seva services. Applications for new passports, renewals, and Tatkaal passports are open 365 days a year.
+- Passport Validity: Standard adult passports are valid for 10 years (5 years for minors), after which a renewal application is submitted.

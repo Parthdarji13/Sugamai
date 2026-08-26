@@ -1,6 +1,6 @@
 import fs from 'fs/promises';
-import { matchQueryToSource } from './queryMatcher';
-import { extractRelevantContent } from './contentExtractor';
+import { matchQueryWithScore, hasGenericGovTerms } from './queryMatcher';
+import { extractRelevantContent, hasRelevantVerifiedContext } from './contentExtractor';
 import { getCachedSourcePath, governmentSources } from './governmentSources';
 
 export interface RetrievalResult {
@@ -11,6 +11,17 @@ export interface RetrievalResult {
   sourceTitle: string;
   sourceUrl: string;
   retrievalMethod: 'live_fetch' | 'live_fetch_with_cached_context' | 'cached_official_fallback' | 'unmatched_default';
+  // Diagnostic fields for audit/test reporting
+  pmjayAttempted?: boolean;
+  pmjayResult?: string;
+  pibAttempted?: boolean;
+  pibHttpStatus?: number;
+  pibRelevantFound?: boolean;
+  liveCharCount?: number;
+  cachedCharCount?: number;
+  isFreshnessQuery?: boolean;
+  freshDataAvailable?: boolean;
+  hasRelevantContext?: boolean;
 }
 
 /**
@@ -94,7 +105,8 @@ function isLiveContentSufficient(extractedLive: string, query: string): boolean 
       'eligibility', 'eligible', 'who can', 'kaun', 'kon', 'paatrata', 'paatra', 'पात्रता', 'पात्र', 'પાત્રતા', 'પાત્ર',
       'document', 'documents', 'proof', 'kagaz', 'kya chahiye', 'kaagaz', 'दस्तावेज', 'કાગળો', 'દસ્તાવેજો',
       'apply', 'application', 'process', 'kaise kare', 'kaise banaye', 'કઈ રીતે', 'અરજી', 'आवेदन', 'प्रक्रिया',
-      'benefit', 'amount', 'paisa', 'rs', 'lakh', 'instalment', 'installment', 'लाभ', 'रुपये', 'હપ્તો'
+      'benefit', 'amount', 'paisa', 'rs', 'lakh', 'instalment', 'installment', 'लाभ', 'रुपये', 'હપ્તો',
+      'last date', 'deadline', 'validity', 'expiry', 'end date', 'kab tak', 'अंतिम तिथि', 'છેલ્લી તારીખ'
     ];
 
     if (guidelineIntents.some(intent => queryLower.includes(intent))) {
@@ -106,9 +118,10 @@ function isLiveContentSufficient(extractedLive: string, query: string): boolean 
   const contentLower = extractedLive.toLowerCase();
 
   const guidelineIntents = [
-    'eligibility', 'eligible', 'who can', 'kaun', 'kon', 'paatrata', 'paatra', 'पात्रता', 'पात्र', 'પાત્રતા', 'પાત્ર',
+    'eligibility', 'eligible', 'who can', 'kaun', 'kon', 'paatrata', 'paatra', 'पात्रता', 'पात्र', 'પાત્રતા', 'पात्र',
     'document', 'documents', 'proof', 'kagaz', 'kya chahiye', 'kaagaz', 'दस्तावेज', 'કાગળો', 'દસ્તાવેજો',
-    'apply', 'application', 'process', 'kaise kare', 'kaise banaye', 'કઈ રીતે', 'અરજી', 'आवेदन', 'प्रक्रिया'
+    'apply', 'application', 'process', 'kaise kare', 'kaise banaye', 'કઈ રીતે', 'અરજી', 'आवेदन', 'प्रक्रिया',
+    'last date', 'deadline', 'validity', 'expiry', 'end date', 'kab tak', 'अंतिम तिथि', 'છેલ્લી તારીખ'
   ];
 
   if (guidelineIntents.some(intent => queryLower.includes(intent))) {
@@ -128,17 +141,212 @@ function isLiveContentSufficient(extractedLive: string, query: string): boolean 
 }
 
 /**
+ * Detects whether the citizen's query is asking for latest/recent updates, changes,
+ * or announcements that require live verified freshness.
+ */
+export function isFreshnessSensitiveQuery(query: string): boolean {
+  const q = query.toLowerCase();
+  const freshnessTerms = [
+    'latest', 'update', 'updates', 'recent', 'recently', 'new', 'news', 'change', 'changes',
+    'announcement', 'announcements', 'current', 'what changed', 'any change', 'new rule', 'new rules',
+    'last date', 'deadline', '2025', '2026', '2027',
+    // Hindi
+    'ताजा', 'ताज़ा', 'नया', 'नए', 'नई', 'अपडेट', 'हालिया', 'बदलाव', 'परिवर्तन', 'घोषणा', 'समाचार',
+    // Gujarati
+    'તાજા', 'તાજું', 'નવા', 'નવી', 'અપડેટ', 'ફેરફાર', 'સુધારો', 'જાહેરાત', 'સમાચાર'
+  ];
+
+  return freshnessTerms.some(term => q.includes(term));
+}
+
+interface PibFallbackResult {
+  liveContent: string | null;
+  sourceUrl?: string;
+  sourceTitle?: string;
+  pibHttpSuccess: boolean;
+  relevantContentFound: boolean;
+  pibHttpStatus: number;
+}
+
+/**
+ * Attempts official Press Information Bureau (PIB) RSS feed fallback for Ayushman Bharat queries
+ * when primary portals (pmjay.gov.in) fail or return sparse content.
+ */
+async function fetchPibAyushmanFallback(query: string): Promise<PibFallbackResult> {
+  console.log('[PIB FALLBACK] Attempting official PIB RSS feed for Ayushman Bharat live updates...');
+
+  const ayushmanTerms = [
+    'ayushman bharat', 'ayushman', 'pmjay', 'pm-jay', 'pm jay',
+    'national health authority', 'nha', 'ayushman card',
+    'आयुष्मान भारत', 'आयुष्मान', 'आयुष्मान कार्ड', 'राष्ट्रीय स्वास्थ्य प्राधिकरण',
+    'આયુષ્માન ભારત', 'આયુષ્માન', 'આયુષ્માન કાર્ડ'
+  ];
+
+  let pibHttpStatus = 0;
+  const rssItems: Array<{ title: string; link: string; description?: string; pubDate?: string }> = [];
+
+  // Fetch English (lang=1), Hindi (lang=2), and Regional (reg=3) PIB RSS feeds
+  const feedUrls = [
+    'https://www.pib.gov.in/RssMain.aspx?ModId=6&reg=48&lang=1',
+    'https://www.pib.gov.in/RssMain.aspx?ModId=6&reg=48&lang=2',
+    'https://www.pib.gov.in/RssMain.aspx?ModId=6&reg=3&lang=1'
+  ];
+
+  for (const feedUrl of feedUrls) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 4000);
+
+      const response = await fetch(feedUrl, {
+        method: 'GET',
+        signal: controller.signal,
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 SugamGovAI/1.0',
+          'Accept': 'application/xml,text/xml,application/xhtml+xml,*/*'
+        }
+      });
+      clearTimeout(timeoutId);
+
+      if (response.status > 0) pibHttpStatus = response.status;
+      if (response.ok) {
+        const xmlText = await response.text();
+        const itemMatches = xmlText.match(/<item>[\s\S]*?<\/item>/gi) || [];
+
+        for (const itemXml of itemMatches) {
+          const titleMatch = itemXml.match(/<title>([\s\S]*?)<\/title>/i);
+          const linkMatch = itemXml.match(/<link>([\s\S]*?)<\/link>/i);
+          const descMatch = itemXml.match(/<description>([\s\S]*?)<\/description>/i);
+          const dateMatch = itemXml.match(/<pubDate>([\s\S]*?)<\/pubDate>/i);
+
+          if (titleMatch && linkMatch) {
+            const rawTitle = titleMatch[1].replace(/<!\[CDATA\[([\s\S]*?)\]\]>/gi, '$1').replace(/<[^>]+>/g, '').trim();
+            let rawLink = linkMatch[1].replace(/<!\[CDATA\[([\s\S]*?)\]\]>/gi, '$1').trim();
+            const rawDesc = descMatch ? descMatch[1].replace(/<!\[CDATA\[([\s\S]*?)\]\]>/gi, '$1').replace(/<[^>]+>/g, '').trim() : '';
+
+            if (rawLink.startsWith('http://pib.gov.in') || rawLink.startsWith('http://www.pib.gov.in')) {
+              rawLink = rawLink.replace('http://', 'https://');
+            }
+
+            rssItems.push({
+              title: rawTitle,
+              link: rawLink,
+              description: rawDesc,
+              pubDate: dateMatch ? dateMatch[1].trim() : undefined
+            });
+          }
+        }
+      }
+    } catch (err) {
+      console.warn(`[PIB FALLBACK] RSS feed fetch failed (${feedUrl}): ${(err as Error).message}`);
+    }
+  }
+
+  // Filter RSS items for Ayushman relevance
+  const matchingItems = rssItems.filter(item => {
+    const combinedText = `${item.title} ${item.description || ''}`.toLowerCase();
+    return ayushmanTerms.some(term => combinedText.includes(term.toLowerCase()));
+  });
+
+  if (matchingItems.length === 0) {
+    console.log('[PIB FALLBACK] PIB RSS feed reached, but 0 relevant Ayushman Bharat items found.');
+    return {
+      liveContent: null,
+      pibHttpSuccess: pibHttpStatus >= 200 && pibHttpStatus < 300,
+      relevantContentFound: false,
+      pibHttpStatus: pibHttpStatus || 200
+    };
+  }
+
+  // Fetch detailed press release pages for matching items or format text
+  let extractedLivePibText = '';
+  const mainUrl = matchingItems[0].link;
+
+  for (const match of matchingItems.slice(0, 2)) {
+    let prText = `${match.title}\n${match.description || ''}`;
+    if (match.link) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 4000);
+        const res = await fetch(match.link, {
+          method: 'GET',
+          signal: controller.signal,
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) SugamGovAI/1.0',
+            'Accept': 'text/html,application/xhtml+xml,*/*'
+          }
+        });
+        clearTimeout(timeoutId);
+
+        if (res.ok) {
+          const html = await res.text();
+          const cleaned = cleanHtmlContent(html);
+          if (isValidLiveContent(cleaned)) {
+            const extracted = extractRelevantContent(cleaned, query);
+            if (extracted && extracted.length >= 80) {
+              prText = extracted;
+            }
+          }
+        }
+      } catch {
+        // Fall back to title + description
+      }
+    }
+
+    const pubInfo = match.pubDate ? ` (Published: ${match.pubDate})` : '';
+    extractedLivePibText += `PIB Official Release: ${match.title}${pubInfo}\n${prText}\n\n`;
+  }
+
+  extractedLivePibText = extractedLivePibText.trim();
+  console.log(`[PIB FALLBACK] Found ${matchingItems.length} relevant Ayushman PIB item(s). Extracted ${extractedLivePibText.length} chars of live PIB text.`);
+
+  return {
+    liveContent: extractedLivePibText,
+    sourceUrl: mainUrl,
+    sourceTitle: 'National Health Authority / Press Information Bureau',
+    pibHttpSuccess: true,
+    relevantContentFound: true,
+    pibHttpStatus: pibHttpStatus || 200
+  };
+}
+
+/**
+ * Determines whether a query is a plausible follow-up related to government schemes/services
+ * rather than a completely unrelated general knowledge query.
+ */
+function isPlausibleFollowUp(query: string): boolean {
+  const q = query.toLowerCase();
+  const followUpKeywords = [
+    'eligible', 'eligibility', 'who', 'who is', 'who can', 'document', 'documents', 'proof',
+    'apply', 'application', 'process', 'how', 'how to', 'how can', 'benefit', 'benefits',
+    'amount', 'money', 'paisa', 'kist', 'installment', 'status', 'update', 'updates', 'latest',
+    'rule', 'rules', 'form', 'card', 'last date', 'deadline', 'validity', 'aadhaar', 'age', 'limit',
+    'kya', 'kaise', 'kaun', 'kitna', 'kab', 'पात्रता', 'पात्र', 'दस्तावेज', 'आवेदन', 'लाभ', 'किस्त',
+    'કઈ રીતે', 'કોણ', 'પાત્રતા', 'દસ્તાવેજો', 'અરજી', 'લાભ', 'હપ્તો'
+  ];
+  return followUpKeywords.some(kw => q.includes(kw)) || hasGenericGovTerms(query);
+}
+
+/**
  * Retrieves official government information related to the user query.
- * Attempts live GET retrieval from the official portal with a 6-second timeout.
+ * Attempts live GET retrieval from the official portal with a short timeout.
  * If live retrieval is insufficient or fails, enriches or falls back to verified local .txt sources.
  */
 export async function retrieveOfficialInfo(query: string, fallbackSourceId?: string): Promise<RetrievalResult> {
-  // 1. Identify which government service matches the query
-  let source = matchQueryToSource(query);
+  const isFreshnessQuery = isFreshnessSensitiveQuery(query);
 
-  // Fallback to previous matched source in session if current query is not explicitly matched
-  if (!source && fallbackSourceId) {
-    source = governmentSources.find(s => s.id === fallbackSourceId) || null;
+  // 1. Identify which government service matches the query (with score metadata)
+  const matchResult = matchQueryWithScore(query);
+  let source = matchResult.source;
+
+  // Context preservation rule:
+  // Retain fallbackSourceId only if query is a follow-up or generic government inquiry
+  if (fallbackSourceId && isPlausibleFollowUp(query)) {
+    if (!source || (!matchResult.isExplicitAliasMatch && matchResult.score < 10 && source.id !== fallbackSourceId)) {
+      const activeFallbackSource = governmentSources.find(s => s.id === fallbackSourceId);
+      if (activeFallbackSource) {
+        source = activeFallbackSource;
+      }
+    }
   }
 
   if (!source) {
@@ -147,67 +355,111 @@ export async function retrieveOfficialInfo(query: string, fallbackSourceId?: str
       content: 'No matching official government service was found for this query.',
       sourceTitle: 'SugamGov AI System',
       sourceUrl: '',
-      retrievalMethod: 'unmatched_default'
+      retrievalMethod: 'unmatched_default',
+      isFreshnessQuery,
+      freshDataAvailable: false
     };
   }
 
-  const targetUrl = source.officialUrl;
+  const targetUrls = [source.officialUrl, ...(source.alternateUrls || [])];
   const targetName = source.name;
 
-  console.log(`[LIVE RETRIEVAL] Attempting ${targetName} (${targetUrl})`);
-
-  let liveFetchedCleanHtml: string | null = null;
   let extractedLive: string | null = null;
   let retrievalMethod: 'live_fetch' | 'live_fetch_with_cached_context' | 'cached_official_fallback' = 'cached_official_fallback';
 
-  // 2. Attempt Live GET retrieval with 6-second timeout
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 6000);
+  // Audit variables
+  const isAyushman = source.id === 'ayushman_bharat';
+  let pmjayAttempted = false;
+  let pmjayResult = 'Not Attempted';
+  let pibAttempted = false;
+  let pibHttpStatus = 0;
+  let pibRelevantFound = false;
+  let liveCharCount = 0;
+  let cachedCharCount = 0;
+  let finalSourceTitle = source.sourceTitle;
+  let finalSourceUrl = source.officialUrl;
 
-    const response = await fetch(targetUrl, {
-      method: 'GET',
-      signal: controller.signal,
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 SugamGovAI/1.0',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.9,hi;q=0.8,gu;q=0.7'
-      }
-    });
-
-    clearTimeout(timeoutId);
-
-    if (response.ok) {
-      const htmlText = await response.text();
-      const cleanedText = cleanHtmlContent(htmlText);
-
-      if (isValidLiveContent(cleanedText)) {
-        const liveExtract = extractRelevantContent(cleanedText, query);
-        if (liveExtract && liveExtract.trim().length >= 100) {
-          liveFetchedCleanHtml = cleanedText;
-          extractedLive = liveExtract;
-          console.log(`[LIVE RETRIEVAL] Live GET Succeeded for ${targetName} - Extracted ${extractedLive.length} chars live text.`);
-        }
-      }
+  // 2. Attempt Live GET retrieval (Priority 1: Primary portal, Priority 2: Alternate URLs)
+  for (const urlToFetch of targetUrls) {
+    if (extractedLive) break; // Stop once valid content is fetched
+    console.log(`[LIVE RETRIEVAL] Attempting ${targetName} (${urlToFetch})`);
+    if (isAyushman && urlToFetch.includes('pmjay.gov.in')) {
+      pmjayAttempted = true;
     }
-  } catch (err) {
-    const errMsg = (err as Error).name === 'AbortError' ? 'Timed out after 6000ms' : (err as Error).message;
-    console.warn(`[LIVE RETRIEVAL] Failed ${targetName} - ${errMsg}`);
+
+    try {
+      const controller = new AbortController();
+      const timeoutMs = urlToFetch.includes('pmjay.gov.in') || urlToFetch.includes('nha.gov.in') ? 2500 : 6000;
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+      const response = await fetch(urlToFetch, {
+        method: 'GET',
+        signal: controller.signal,
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 SugamGovAI/1.0',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.9,hi;q=0.8,gu;q=0.7'
+        }
+      });
+
+      clearTimeout(timeoutId);
+
+      if (response.ok) {
+        const htmlText = await response.text();
+        const cleanedText = cleanHtmlContent(htmlText);
+
+        if (isValidLiveContent(cleanedText)) {
+          const liveExtract = extractRelevantContent(cleanedText, query);
+          if (liveExtract && liveExtract.trim().length >= 100) {
+            extractedLive = liveExtract;
+            if (isAyushman && urlToFetch.includes('pmjay.gov.in')) pmjayResult = 'HTTP 200 (Success)';
+            console.log(`[LIVE RETRIEVAL] Live GET Succeeded for ${targetName} via ${urlToFetch} - Extracted ${extractedLive.length} chars live text.`);
+          } else {
+            if (isAyushman && urlToFetch.includes('pmjay.gov.in')) pmjayResult = 'HTTP 200 (Sparse/Shell Content)';
+          }
+        } else {
+          if (isAyushman && urlToFetch.includes('pmjay.gov.in')) pmjayResult = 'HTTP 200 (Blocked/Error Page)';
+        }
+      } else {
+        if (isAyushman && urlToFetch.includes('pmjay.gov.in')) pmjayResult = `HTTP ${response.status}`;
+      }
+    } catch (err) {
+      const errMsg = (err as Error).name === 'AbortError' ? 'Timed out after 2500ms' : (err as Error).message;
+      if (isAyushman && urlToFetch.includes('pmjay.gov.in')) pmjayResult = `Failed (${errMsg})`;
+      console.warn(`[LIVE RETRIEVAL] Failed ${targetName} (${urlToFetch}) - ${errMsg}`);
+    }
   }
 
-  // 3. Determine Sufficiency & Combined Context
-  let finalContent = '';
+  // 3. Fallback to PIB feed for Ayushman Bharat (Priority 3) if primary portals fail/return sparse content
+  if (!extractedLive && isAyushman) {
+    pibAttempted = true;
+    const pibResult = await fetchPibAyushmanFallback(query);
+    pibHttpStatus = pibResult.pibHttpStatus;
+    pibRelevantFound = pibResult.relevantContentFound;
 
-  if (liveFetchedCleanHtml && extractedLive) {
+    if (pibResult.liveContent) {
+      extractedLive = pibResult.liveContent;
+      if (pibResult.sourceUrl) finalSourceUrl = pibResult.sourceUrl;
+      if (pibResult.sourceTitle) finalSourceTitle = pibResult.sourceTitle;
+      console.log(`[LIVE RETRIEVAL] PIB Fallback Succeeded for ${targetName}. Extracted ${extractedLive.length} chars live PIB text.`);
+    }
+  }
+
+  // 4. Determine Sufficiency & Combined Context
+  let finalContent = '';
+  const freshDataAvailable = !!extractedLive && extractedLive.length > 0;
+
+  if (extractedLive) {
+    liveCharCount = extractedLive.length;
     const sufficient = isLiveContentSufficient(extractedLive, query);
 
-    if (sufficient) {
+    if (sufficient && !pibAttempted) {
       retrievalMethod = 'live_fetch';
       finalContent = extractedLive;
       console.log(`[LIVE RETRIEVAL] Live content is SUFFICIENT for query intent. Using 'live_fetch'.`);
     } else {
       retrievalMethod = 'live_fetch_with_cached_context';
-      console.log(`[LIVE RETRIEVAL] Live fetch succeeded for ${targetName}, but query requires official guideline context. Combining live + verified cached context.`);
+      console.log(`[LIVE RETRIEVAL] Combining live official context + verified cached guidelines.`);
 
       // Read verified local cached .txt file
       let cachedText = '';
@@ -219,11 +471,16 @@ export async function retrieveOfficialInfo(query: string, fallbackSourceId?: str
       }
 
       const extractedCached = extractRelevantContent(cachedText, query);
+      cachedCharCount = extractedCached.length;
 
-      finalContent = `LIVE OFFICIAL ANNOUNCEMENTS & UPDATES:\n${extractedLive}\n\nVERIFIED OFFICIAL GUIDELINES:\n${extractedCached}`;
+      const liveHeader = pibAttempted
+        ? 'LIVE OFFICIAL PIB ANNOUNCEMENTS & UPDATES:'
+        : 'LIVE OFFICIAL ANNOUNCEMENTS & UPDATES:';
+
+      finalContent = `${liveHeader}\n${extractedLive}\n\nVERIFIED OFFICIAL GUIDELINES:\n${extractedCached}`;
     }
   } else {
-    // 4. Live fetch completely failed -> Fall back to local cached source
+    // 5. Live fetch & fallbacks failed -> Fall back to local cached source (Priority 4/5)
     retrievalMethod = 'cached_official_fallback';
     console.log(`[LIVE RETRIEVAL] Live fetch failed/sparse. Using cached_official_fallback for ${targetName}.`);
 
@@ -235,16 +492,39 @@ export async function retrieveOfficialInfo(query: string, fallbackSourceId?: str
       cachedText = `Error: Official government document for ${source.name} is temporarily unavailable.`;
     }
 
-    finalContent = extractRelevantContent(cachedText, query);
+    const extractedCached = extractRelevantContent(cachedText, query);
+    cachedCharCount = extractedCached.length;
+    finalContent = extractedCached;
   }
+
+  const hasRelevantContext = hasRelevantVerifiedContext(query, finalContent);
+
+  console.log(`[RETRIEVAL SUMMARY] Matched Service: ${source.name}`);
+  console.log(`[RETRIEVAL SUMMARY] Official URL: ${finalSourceUrl}`);
+  console.log(`[RETRIEVAL SUMMARY] Retrieval Method: ${retrievalMethod}`);
+  console.log(`[RETRIEVAL SUMMARY] Live fetch status: ${extractedLive ? 'Succeeded' : 'Failed'}`);
+  console.log(`[RETRIEVAL SUMMARY] Freshness query: ${isFreshnessQuery ? 'Yes' : 'No'} | Fresh data available: ${freshDataAvailable ? 'Yes' : 'No'}`);
+  console.log(`[RETRIEVAL SUMMARY] Relevant verified context found: ${hasRelevantContext ? 'Yes' : 'No'}`);
+  console.log(`[RETRIEVAL SUMMARY] Final context length: ${finalContent.length} chars`);
 
   return {
     matched: true,
     serviceId: source.id,
     serviceName: source.name,
     content: finalContent,
-    sourceTitle: source.sourceTitle,
-    sourceUrl: source.officialUrl,
-    retrievalMethod
+    sourceTitle: finalSourceTitle,
+    sourceUrl: finalSourceUrl,
+    retrievalMethod,
+    pmjayAttempted,
+    pmjayResult,
+    pibAttempted,
+    pibHttpStatus,
+    pibRelevantFound,
+    liveCharCount,
+    cachedCharCount,
+    isFreshnessQuery,
+    freshDataAvailable,
+    hasRelevantContext
   };
 }
+

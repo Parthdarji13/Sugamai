@@ -34,3 +34,7 @@ Application Process:
 
 Verification Note:
 Entitlements, monthly quotas, and state e-Ration Card procedures should be verified directly on the official NFSA portal (https://nfsa.gov.in/) or respective State Food Department portals.
+
+Scheme Duration, Validity & Last Date:
+- Last Date / Application Deadline: There is NO last date or application deadline for Ration Card / NFSA applications. Applications for new ration cards or member additions are open year-round.
+- Beneficiary Entitlement: Free foodgrains (5 kg per person per month for PHH, 35 kg per family per month for AAY) under NFSA are provided on a continuous monthly basis.

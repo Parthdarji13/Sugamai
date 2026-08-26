@@ -37,3 +37,7 @@ Self-Registration Process:
 
 Verification Note:
 Worker registration is free of cost. Check current registration status and update profile details at the official portal (https://eshram.gov.in/).
+
+Scheme Duration, Validity & Last Date:
+- Last Date / Application Deadline: There is NO last date or closing deadline for e-Shram registration. Registration remains open 24/7 year-round.
+- Card Validity: The e-Shram UWIN card is valid for a lifetime. Workers can update their occupation, address, or bank details at any time.

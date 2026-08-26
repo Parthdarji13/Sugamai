@@ -36,3 +36,7 @@ Application Process:
 
 Verification Note:
 Scheme application open dates, income ceilings, and verification deadlines should be verified on the official NSP portal (https://scholarships.gov.in/).
+
+Scheme Duration, Validity & Last Date:
+- Academic Application Window: National Scholarship Portal (NSP) applications open annually for each academic year (typically between July/August and December/January).
+- Application Deadline: Students must submit online applications before the state/ministry-specific deadline published annually on https://scholarships.gov.in/ (usually extended till late December or January). Existing beneficiaries submit annual renewal applications.

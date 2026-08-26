@@ -220,7 +220,7 @@ export default function Home() {
     const resetTimeout = () => {
       if (clientTimeout) clearTimeout(clientTimeout);
       clientTimeout = setTimeout(() => {
-        console.warn('Client-side stream timeout reached (15 seconds of silence).');
+        console.warn('Client-side stream timeout reached (28 seconds of silence).');
         if (reader) {
           try {
             reader.cancel();
@@ -228,7 +228,7 @@ export default function Home() {
             /* ignore cancel error */
           }
         }
-      }, 15000);
+      }, 28000);
     };
 
     try {

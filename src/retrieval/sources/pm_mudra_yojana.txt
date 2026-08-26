@@ -34,3 +34,7 @@ Application Process:
 
 Verification Note:
 Interest rates vary by lender bank based on RBI/Mudra guidelines. Check details at https://www.mudra.org.in/ or official bank branches.
+
+Scheme Duration, Validity & Last Date:
+- Last Date / Application Deadline: There is NO last date or closing deadline for Pradhan Mantri Mudra Yojana (PMMY). It is an ongoing central micro-finance scheme.
+- Application Availability: Micro-entrepreneurs and small business owners can apply for Mudra loans year-round through commercial banks, RRBs, MFIs, and JanSamarth portal.

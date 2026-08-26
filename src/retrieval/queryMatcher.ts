@@ -81,21 +81,30 @@ const GENERIC_TERMS = new Set([
   'યોજના', 'પ્રમાણપત્ર', 'દાખલો', 'પાત્રતા', 'લાગુ', 'દસ્તાવેજો', 'સરકારી', 'સેવા', 'અરજી'
 ]);
 
+export interface MatchResult {
+  source: GovernmentSource | null;
+  score: number;
+  isExplicitAliasMatch: boolean;
+}
+
 /**
  * Matches a user query to a government source using data-driven aliases,
  * intent phrase boosts, keyword matching, and selective fuzzy edit-distance matching.
+ * Returns the source alongside score metadata.
  */
-export function matchQueryToSource(query: string): GovernmentSource | null {
+export function matchQueryWithScore(query: string): MatchResult {
   const normalizedQuery = normalizeText(query);
-  if (!normalizedQuery) return null;
+  if (!normalizedQuery) return { source: null, score: 0, isExplicitAliasMatch: false };
 
   const queryWords = normalizedQuery.split(' ').filter(w => w.length > 3 && !GENERIC_TERMS.has(w));
 
   let bestSource: GovernmentSource | null = null;
   let highestScore = 0;
+  let isExplicitAliasMatch = false;
 
   for (const source of governmentSources) {
     let score = 0;
+    let explicitAlias = false;
 
     // 1. Data-Driven Alias Matching (+15 for exact alias substring match)
     if (source.aliases) {
@@ -103,6 +112,7 @@ export function matchQueryToSource(query: string): GovernmentSource | null {
         const normAlias = normalizeText(alias);
         if (normAlias && normalizedQuery.includes(normAlias)) {
           score += 15;
+          explicitAlias = true;
           break; // Avoid multi-counting aliases for the same source
         }
       }
@@ -159,12 +169,21 @@ export function matchQueryToSource(query: string): GovernmentSource | null {
     if (score > highestScore) {
       highestScore = score;
       bestSource = source;
+      isExplicitAliasMatch = explicitAlias;
     }
   }
 
   // Threshold: at least a score of 3 is required to guarantee match confidence
   const MIN_THRESHOLD = 3;
-  return highestScore >= MIN_THRESHOLD ? bestSource : null;
+  return {
+    source: highestScore >= MIN_THRESHOLD ? bestSource : null,
+    score: highestScore,
+    isExplicitAliasMatch
+  };
+}
+
+export function matchQueryToSource(query: string): GovernmentSource | null {
+  return matchQueryWithScore(query).source;
 }
 
 /**

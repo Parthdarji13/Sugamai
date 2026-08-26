@@ -330,6 +330,7 @@ body {
   animation: borderRotate 4s linear infinite;
   opacity: 0;
   transition: opacity 0.4s ease;
+  pointer-events: none;
 }
 
 .animated-border:hover::before,

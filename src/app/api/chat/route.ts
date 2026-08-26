@@ -1,12 +1,13 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { retrieveOfficialInfo } from '@/retrieval/sourceManager';
 import { hasGenericGovTerms } from '@/retrieval/queryMatcher';
+import { isQuotaExceededError, isAuthConfigError, isTimeoutError, isTemporaryModelError, classifyModelError } from '@/utils/gemini';
 
 export async function POST(req: Request) {
   // Start Total Request timer
   console.time('total-request');
   const requestStart = Date.now();
-  const TOTAL_BUDGET_MS = 18000;
+  const TOTAL_BUDGET_MS = 25000;
 
   try {
     const { message, language, lastMatchedSourceId } = await req.json();
@@ -55,24 +56,47 @@ export async function POST(req: Request) {
     const apiKey = process.env.GEMINI_API_KEY;
     const runInDemoMode = !apiKey || apiKey.trim() === '' || apiKey === 'your_key_here';
 
+    const isFreshnessUnverified = retrievalResult.isFreshnessQuery && !retrievalResult.freshDataAvailable;
+
     let demoAnswer = '';
     if (isSupported && runInDemoMode) {
       console.warn('GEMINI_API_KEY is not set in environment variables. Running in Demo Mode.');
-      if (selectedLanguage === 'hi') {
-        demoAnswer = `**[डेमो मोड - जीमिनी API कुंजी कॉन्फ़िगर नहीं है]**\n\nयहाँ **${retrievalResult.serviceName || 'सरकारी योजना'}** के बारे में आधिकारिक जानकारी दी गई है:\n\n${relevantContent}\n\n*कृपया इस प्रोजेक्ट को चलाने के लिए \`frontend/.env.local\` में अपनी \`GEMINI_API_KEY\` जोड़ें।*`;
-      } else if (selectedLanguage === 'gu') {
-        demoAnswer = `**[ડેમો મોડ - જેમિની API કી સેટ નથી]**\n\nઅહીં **${retrievalResult.serviceName || 'સરકારી યોજના'}** વિશેની સત્તાવાર માહિતી છે:\n\n${relevantContent}\n\n*કૃપા કરીને આ પ્રોજેક્ટ ચલાવવા માટે \`frontend/.env.local\` માં તમારી \`GEMINI_API_KEY\` ઉમેરો.*`;
+      if (isFreshnessUnverified) {
+        if (selectedLanguage === 'hi') {
+          demoAnswer = `**[डेमो मोड - जीमिनी API कुंजी कॉन्फ़िगर नहीं है]**\n\nमुझे वर्तमान में आधिकारिक सरकारी स्रोतों से **${retrievalResult.serviceName || 'सरकारी योजना'}** के लिए किसी हालिया आधिकारिक अपडेट की पुष्टि नहीं हो सकी। मैं सत्यापित सामान्य दिशानिर्देश प्रदान कर सकता हूँ, लेकिन पुरानी जानकारी को नवीनतम अपडेट के रूप में प्रस्तुत नहीं करना चाहता:\n\n${relevantContent}\n\n*कृपया इस प्रोजेक्ट को चलाने के लिए \`frontend/.env.local\` में अपनी \`GEMINI_API_KEY\` जोड़ें।*`;
+        } else if (selectedLanguage === 'gu') {
+          demoAnswer = `**[ડેમો મોડ - જેમિની API કી સેટ નથી]**\n\nમને હાલમાં સત્તાવાર સરકારી સ્ત્રોતોમાંથી **${retrievalResult.serviceName || 'સરકારી યોજના'}** માટે કોઈ તાજા સત્તાવાર અપડેટની ચકાસણી મળી શકી નથી. હું ચકાસાયેલ સામાન્ય માર્ગદર્શિકા પ્રદાન કરી શકું છું, પરંતુ જૂની માહિતીને તાજા અપડેટ તરીકે રજૂ કરવા માંગતો નથી:\n\n${relevantContent}\n\n*કૃપા કરીને આ પ્રોજેક્ટ ચલાવવા માટે \`frontend/.env.local\` માં તમારી \`GEMINI_API_KEY\` ઉમેરો.*`;
+        } else {
+          demoAnswer = `**[Demo Mode - Gemini API Key Not Configured]**\n\nI couldn't verify a recent official update for **${retrievalResult.serviceName || 'Government Scheme'}** from available government sources right now. I can provide the verified general guideline information, but I don't want to present older information as the latest update:\n\n${relevantContent}\n\n*Please add your \`GEMINI_API_KEY\` in \`frontend/.env.local\` to run the live AI summarizer.*`;
+        }
       } else {
-        demoAnswer = `**[Demo Mode - Gemini API Key Not Configured]**\n\nHere is the official information retrieved for **${retrievalResult.serviceName || 'Government Scheme'}**:\n\n${relevantContent}\n\n*Please add your \`GEMINI_API_KEY\` in \`frontend/.env.local\` to run the live AI summarizer.*`;
+        if (selectedLanguage === 'hi') {
+          demoAnswer = `**[डेमो मोड - जीमिनी API कुंजी कॉन्फ़िगर नहीं है]**\n\nयहाँ **${retrievalResult.serviceName || 'सरकारी योजना'}** के बारे में आधिकारिक जानकारी दी गई है:\n\n${relevantContent}\n\n*कृपया इस प्रोजेक्ट को चलाने के लिए \`frontend/.env.local\` में अपनी \`GEMINI_API_KEY\` जोड़ें।*`;
+        } else if (selectedLanguage === 'gu') {
+          demoAnswer = `**[ડેમો મોડ - જેમિની API કી સેટ નથી]**\n\nઅહીં **${retrievalResult.serviceName || 'સરકારી યોજના'}** વિશેની સત્તાવાર માહિતી છે:\n\n${relevantContent}\n\n*કૃપા કરીને આ પ્રોજેક્ટ ચલાવવા માટે \`frontend/.env.local\` માં તમારી \`GEMINI_API_KEY\` ઉમેરો.*`;
+        } else {
+          demoAnswer = `**[Demo Mode - Gemini API Key Not Configured]**\n\nHere is the official information retrieved for **${retrievalResult.serviceName || 'Government Scheme'}**:\n\n${relevantContent}\n\n*Please add your \`GEMINI_API_KEY\` in \`frontend/.env.local\` to run the live AI summarizer.*`;
+        }
       }
     }
 
     const sourceHeading = retrievalResult.retrievalMethod === 'live_fetch_with_cached_context'
       ? 'Here is the VERIFIED information retrieved from official government sources (combining live portal updates and verified official guidelines):'
-      : 'Here is the VERIFIED information retrieved from the official government source:';
+      : (retrievalResult.retrievalMethod === 'live_fetch'
+        ? 'Here is the LIVE VERIFIED information retrieved from the official government portal:'
+        : 'Here is the VERIFIED reference information retrieved from official government guidelines:');
+
+    const freshnessGroundingRule = isFreshnessUnverified
+      ? `\nCRITICAL FRESHNESS RULE:
+- The citizen is asking about the latest update, recent change, or new announcement for this scheme.
+- However, NO fresh live official update was found in today's official government feeds.
+- You MUST explicitly state that no recent official live update could be verified right now from available government sources.
+- NEVER claim or present the standard guidelines below as a "latest update", "new change", or "recent announcement".
+- You may summarize the verified general guidelines for reference, but clearly explain they are established baseline guidelines.`
+      : '';
 
     const systemPrompt = isSupported ? `You are SugamGov AI, an intelligent government service assistant.
-Your goal is to answer the citizen's question accurately.
+Your goal is to answer the citizen's question accurately using only the retrieved official government information below.
 
 ${sourceHeading}
 ---
@@ -84,96 +108,125 @@ Source Link: ${retrievalResult.sourceUrl}
 
 Instructions:
 1. Answer the user's question ONLY using the verified information provided above.
-2. Do NOT invent, assume, or guess any details (dates, eligibility limits, documents, or websites) not present in the verified text.
-3. If the answer cannot be found in the retrieved text, output exactly: "I couldn't find verified information from an official government source for this query." (Translate to selected language if necessary).
-4. Do not mention any unofficial sites or blogs. Only refer to the provided official source.
-5. Translate and answer in the user's selected language: ${languageName}.
-6. Keep the answer structured and clean. Provide a complete, detailed answer covering eligibility, documents required, and the application process in full. Use bolding and markdown lists.
+2. Do NOT invent, assume, or guess any details (dates, eligibility limits, benefit amounts, documents, or websites) that are NOT present anywhere in the retrieved text above.
+3. If the retrieved text contains relevant information related to the question — even if it appears across different sections — use it to provide a thorough, structured, and helpful answer.
+4. If a specific point or sub-detail is not explicitly listed in the text, state what the verified guideline specifies for that service rather than giving a blanket refusal.
+5. ONLY output exactly: "I couldn't find verified information from an official government source for this query." if the user query is asking about a completely unrelated topic or scheme not covered in the text above. Translate this phrase to the selected language if necessary.
+6. Do not mention any unofficial sites or blogs. Only refer to the provided official source and its URL.
+7. Translate and answer in the user's selected language: ${languageName}.
+8. Keep the answer structured and clean. Use bolding and markdown lists. Cover all relevant details from the retrieved text: eligibility, benefit amount, documents required, and application process.${freshnessGroundingRule}
 ` : '';
 
-    // Strictly Timed 18-Second Cascade Handshake (No Retries or Backoffs)
+    // Quota-Aware & Resilient Gemini Cascade (No Retries on 429 or 503)
     let result = null;
     if (isSupported && !runInDemoMode) {
       const genAI = new GoogleGenerativeAI(apiKey!);
       let lastError: Error | null = null;
+      // Ordered cascade: newest/fastest first → resilient fallbacks
+      const CASCADE_MODELS = ['gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3.5-flash-lite', 'gemini-2.0-flash', 'gemini-1.5-flash'];
 
-      const firstModelName = 'gemini-3.6-flash';
-      try {
-        console.log(`[STREAM LOG] Cascade Attempt 1: Trying model: ${firstModelName} with 10s timeout`);
-        const model = genAI.getGenerativeModel({
-          model: firstModelName,
-          systemInstruction: systemPrompt
-        });
+      for (let i = 0; i < CASCADE_MODELS.length; i++) {
+        const modelName = CASCADE_MODELS[i];
+        const attemptNum = i + 1;
 
-        const streamPromise = model.generateContentStream({
-          contents: [{ role: "user", parts: [{ text: message }] }],
-          generationConfig: {
-            maxOutputTokens: 2048,
-            temperature: 0.2
-          }
-        });
-
-        result = await Promise.race([
-          streamPromise,
-          new Promise<never>((_, reject) =>
-            setTimeout(() => reject(new Error('Connection timed out: 10 seconds of silence')), 10000)
-          )
-        ]);
-
-        console.log(`[STREAM LOG] Gemini connection established successfully using model ${firstModelName}`);
-      } catch (err) {
-        lastError = err as Error;
-        console.warn(`[STREAM LOG] Model ${firstModelName} failed: ${lastError.message}`);
-      }
-
-      // Model 2: If first model fails, try gemini-3.5-flash with remaining-time budget (min 8s)
-      if (!result) {
-        const secondModelName = 'gemini-3.5-flash';
         const elapsed = Date.now() - requestStart;
         const remaining = TOTAL_BUDGET_MS - elapsed;
-        const timeoutForSecondModel = Math.max(remaining, 8000);
+        if (remaining <= 0) {
+          console.warn(`[STREAM LOG] Total budget of ${TOTAL_BUDGET_MS}ms exceeded before attempting model ${modelName}`);
+          break;
+        }
+
+        // Predictable per-model timeouts:
+        // - 3.6-flash & 3.5-flash capped at 6s so timeouts never consume the entire budget
+        // - 3.5-flash-lite gets the remaining global budget (minimum 8s) to guarantee execution
+        const timeoutMs = (i === 0 || i === 1) ? Math.min(6000, remaining) : Math.max(remaining - 500, 8000);
 
         try {
-          console.log(`[STREAM LOG] Cascade Attempt 2: Trying model: ${secondModelName} with ${timeoutForSecondModel}ms timeout`);
+          console.log(`[STREAM LOG] Cascade Attempt ${attemptNum}: Trying model: ${modelName}`);
           const model = genAI.getGenerativeModel({
-            model: secondModelName,
+            model: modelName,
             systemInstruction: systemPrompt
           });
 
           const streamPromise = model.generateContentStream({
             contents: [{ role: "user", parts: [{ text: message }] }],
             generationConfig: {
-              maxOutputTokens: 2048,
-              temperature: 0.2
+              // Note: temperature is deprecated in Gemini 3.x and silently ignored.
+              // Removed to avoid future HTTP 400 INVALID_ARGUMENT errors.
+              maxOutputTokens: 2048
             }
           });
 
-          result = await Promise.race([
-            streamPromise,
-            new Promise<never>((_, reject) =>
-              setTimeout(() => reject(new Error(`Connection timed out: ${timeoutForSecondModel}ms of silence`)), timeoutForSecondModel)
-            )
-          ]);
+          // Race the stream connection against a per-model timeout.
+          // IMPORTANT: capture the timeout handle so we can clear it when
+          // streamPromise wins the race. Without clearTimeout the orphaned
+          // setTimeout fires ~timeoutMs later and calls reject() on an
+          // already-settled Promise — an unhandled rejection that crashes
+          // Node.js 15+ processes.
+          let connectionTimeoutId: ReturnType<typeof setTimeout>;
+          const connectionTimeoutPromise = new Promise<never>((_, reject) => {
+            connectionTimeoutId = setTimeout(
+              () => reject(new Error(`Connection timed out: ${timeoutMs}ms of silence`)),
+              timeoutMs
+            );
+          });
 
-          console.log(`[STREAM LOG] Gemini connection established successfully using model ${secondModelName}`);
+          result = await Promise.race([streamPromise, connectionTimeoutPromise]);
+
+          // Stream won — kill the pending timer before it becomes an unhandled rejection.
+          clearTimeout(connectionTimeoutId!);
+
+          console.log(`[STREAM LOG] Gemini connection established successfully using model ${modelName}`);
+          break;
         } catch (err) {
           lastError = err as Error;
-          console.error(`[STREAM LOG] Fallback model ${secondModelName} also failed: ${lastError.message}`);
+          const errCategory = classifyModelError(err);
+          if (errCategory === 'quota') {
+            console.warn(`[STREAM LOG] Model ${modelName} quota exhausted (429). Skipping without retry.`);
+          } else if (errCategory === 'auth') {
+            console.error(`[STREAM LOG] Model ${modelName} failed due to authentication/configuration error: ${lastError.message}`);
+            break; // Stop cascade — auth failure affects all models equally
+          } else if (errCategory === 'temporary') {
+            console.warn(`[STREAM LOG] Model ${modelName} temporarily unavailable (503). Skipping to fallback.`);
+          } else if (errCategory === 'timeout') {
+            console.warn(`[STREAM LOG] Model ${modelName} timed out (${timeoutMs}ms). Skipping to fallback model.`);
+          } else {
+            console.warn(`[STREAM LOG] Model ${modelName} failed: ${lastError.message}`);
+          }
         }
       }
 
-      // Handle final error if both primary and fallback failed
+      // Handle final error — all cascade models exhausted
       if (!result && lastError) {
-        console.error('[STREAM CASCADE ERROR] Handshake failed across all cascade models:', lastError);
-        const errMsg = lastError.message;
-        const isTimeout = errMsg.includes('timed out');
-        const is503 = errMsg.includes('503') || errMsg.toLowerCase().includes('service unavailable') || errMsg.toLowerCase().includes('busy') || errMsg.toLowerCase().includes('overloaded');
-        const is429 = errMsg.includes('429') || errMsg.toLowerCase().includes('rate limit') || errMsg.toLowerCase().includes('quota');
+        const finalCategory = classifyModelError(lastError);
+        const isQuota = isQuotaExceededError(lastError);
+        const isAuth = isAuthConfigError(lastError);
+        const isTimeout = isTimeoutError(lastError);
+        const isTemporary = isTemporaryModelError(lastError);
+
+        // Note: retrieval succeeded — this is a generation/model-layer failure only
+        console.error('[STREAM CASCADE ERROR] All Gemini models unavailable.');
+        if (isQuota && isTemporary) {
+          console.error('[STREAM CASCADE ERROR] Reason: mixed quota and temporary service exhaustion.');
+        } else if (isQuota) {
+          console.error('[STREAM CASCADE ERROR] Reason: quota exhaustion across all cascade models.');
+        } else if (isTemporary) {
+          console.error('[STREAM CASCADE ERROR] Reason: temporary service unavailability (503/502) across all cascade models.');
+        } else if (isAuth) {
+          console.error('[STREAM CASCADE ERROR] Reason: authentication/configuration error — cascade stopped early.');
+        } else if (isTimeout) {
+          console.error('[STREAM CASCADE ERROR] Reason: timeout across all cascade models.');
+        } else {
+          console.error(`[STREAM CASCADE ERROR] Reason: unknown (${finalCategory}). Last error: ${lastError.message}`);
+        }
 
         let errorStatus = 500;
         let errorText = "The AI assistant is temporarily unavailable. Please try asking again.";
 
-        if (isTimeout) {
+        if (isAuth) {
+          errorStatus = 401;
+          errorText = "AI service configuration issue (Invalid API Key). Please check your server environment.";
+        } else if (isTimeout) {
           errorStatus = 504;
           if (selectedLanguage === 'hi') {
             errorText = "एआई सहायक 18 सेकंड की निष्क्रियता के बाद समय समाप्त हो गया। कृपया फिर से प्रयास करें।";
@@ -182,14 +235,15 @@ Instructions:
           } else {
             errorText = "The AI assistant timed out after 18 seconds of silence. Please try again.";
           }
-        } else if (is503 || is429) {
-          errorStatus = is503 ? 503 : 429;
+        } else if (isTemporary || isQuota) {
+          // Always surface a user-friendly 503 for any temporary/quota failure
+          errorStatus = 503;
           if (selectedLanguage === 'hi') {
             errorText = "एआई सहायक अत्यधिक मांग के कारण अस्थायी रूप से व्यस्त है। कृपया कुछ क्षणों में फिर से पूछने का प्रयास करें।";
           } else if (selectedLanguage === 'gu') {
             errorText = "AI સહાયક વધુ માંગને કારણે કામચલાઉ વ્યસ્ત છે. કૃપા કરીને થોડી ક્ષણો પછી ફરીથી પૂછવાનો પ્રયાસ કરો।";
           } else {
-            errorText = "The AI assistant is temporarily busy due to high demand. Please try asking again in a moment.";
+            errorText = "The AI service is temporarily unavailable. Please try again in a moment.";
           }
         } else {
           if (selectedLanguage === 'hi') {
@@ -244,7 +298,9 @@ Instructions:
           sourceUrl: retrievalResult.sourceUrl,
           retrievalMethod: retrievalResult.retrievalMethod,
           isSupported: true,
-          serviceId: retrievalResult.serviceId
+          serviceId: retrievalResult.serviceId,
+          isFreshnessQuery: retrievalResult.isFreshnessQuery,
+          freshDataAvailable: retrievalResult.freshDataAvailable
         });
 
         // If Demo Mode

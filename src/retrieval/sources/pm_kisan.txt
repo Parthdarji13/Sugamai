@@ -24,3 +24,42 @@ The following categories of beneficiaries of higher economic status shall NOT be
    - All superannuated/retired pensioners whose monthly pension is Rs.10,000/- or more (Excluding Multi Tasking Staff / Class IV/Group D employees).
    - All Persons who paid Income Tax in the last assessment year.
    - Professionals like Doctors, Engineers, Lawyers, Chartered Accountants, and Architects registered with Professional bodies and carrying out profession by undertaking practice.
+
+Documents Required:
+To register and avail PM-KISAN benefits, farmers need to submit the following documents:
+1. Aadhaar Card (mandatory for identity verification and DBT transfer).
+2. Land Records / Khasra-Khatauni (proof of landholding in the farmer's name as per state land records).
+3. Bank Account Details: Bank passbook or cancelled cheque showing account number linked to Aadhaar.
+4. Mobile Number linked to Aadhaar for OTP-based verification.
+5. Self-Declaration Form confirming eligibility and that the farmer does not fall under the exclusion categories.
+Note: Documents may vary slightly by state. Check with your local Patwari/Lekhpal or Common Service Centre (CSC) for state-specific requirements.
+
+How to Apply (Application Process):
+Farmers can register for PM-KISAN through any of the following methods:
+
+Method 1 - Online Registration via Official Portal:
+- Visit https://pmkisan.gov.in/
+- Click on "Farmers Corner" and then "New Farmer Registration".
+- Enter Aadhaar number, state, and captcha, then submit.
+- Fill in personal, bank, and land details.
+- Submit the form and note the registration reference number.
+
+Method 2 - Common Service Centre (CSC):
+- Visit your nearest CSC/Jan Seva Kendra with the required documents.
+- The CSC operator will register you on the PM-KISAN portal.
+
+Method 3 - Through Patwari / Agriculture Department:
+- Contact your local Patwari, Lekhpal, or District Agriculture Officer.
+- They can assist in verifying land records and registering on the portal.
+
+Method 4 - Kisaan e-Mitra Chatbot / PM-KISAN Mobile App:
+- Use the official PM-KISAN mobile app (available on Google Play Store) or the Kisaan e-Mitra chatbot on the portal to check status and register.
+
+Status Check:
+- Farmers can check beneficiary status at https://pmkisan.gov.in/ under "Farmers Corner" → "Beneficiary Status".
+- Enter Aadhaar number, account number, or mobile number to check payment status.
+
+Scheme Duration, Validity & Last Date:
+- Last Date / Application Deadline: There is NO last date or closing deadline for PM Kisan Samman Nidhi. It is an ongoing Central Sector scheme of the Ministry of Agriculture & Farmers Welfare.
+- Continuous Registration: Eligible landholding farmers can apply and register on the PM Kisan portal at any time throughout the year.
+- Installment Cycle: Installments of ₹2,000 are released every four months (three times a year) directly into registered bank accounts.
