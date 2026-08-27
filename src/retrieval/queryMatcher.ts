@@ -74,11 +74,11 @@ const INTENT_PHRASES: Record<string, string[]> = {
 
 const GENERIC_TERMS = new Set([
   // English
-  'certificate', 'yojana', 'scheme', 'eligibility', 'eligible', 'apply', 'documents', 'government', 'gov', 'service', 'today', 'weather', 'restaurant', 'poem', 'write',
+  'certificate', 'yojana', 'scheme', 'eligibility', 'eligible', 'apply', 'documents', 'document', 'papers', 'paper', 'kagaz', 'kaagaz', 'government', 'gov', 'service', 'today', 'weather', 'restaurant', 'poem', 'write',
   // Hindi
-  'योजना', 'प्रमाण पत्र', 'सर्टिफिकेट', 'पात्रता', 'लागू', 'दस्तावेज', 'सरकारी', 'सेवा', 'अप्लाई',
+  'योजना', 'प्रमाण पत्र', 'सर्टिफिकेट', 'पात्रता', 'लागू', 'दस्तावेज', 'कागज', 'कागजात', 'सरकारी', 'सेवा', 'अप्लाई',
   // Gujarati
-  'યોજના', 'પ્રમાણપત્ર', 'દાખલો', 'પાત્રતા', 'લાગુ', 'દસ્તાવેજો', 'સરકારી', 'સેવા', 'અરજી'
+  'યોજના', 'પ્રમાણપત્ર', 'દાખલો', 'પાત્રતા', 'લાગુ', 'દસ્તાવેજો', 'કાગળ', 'કાગળો', 'સરકારી', 'સેવા', 'અરજી'
 ]);
 
 export interface MatchResult {

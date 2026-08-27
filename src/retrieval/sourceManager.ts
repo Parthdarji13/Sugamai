@@ -98,31 +98,66 @@ function isValidLiveContent(text: string): boolean {
  * Determines whether live extracted content is sufficient to answer the user's intent,
  * or whether verified guideline context should be combined with it.
  */
-function isLiveContentSufficient(extractedLive: string, query: string): boolean {
-  if (!extractedLive || extractedLive.trim().length < 400) {
-    const queryLower = query.toLowerCase();
-    const guidelineIntents = [
-      'eligibility', 'eligible', 'who can', 'kaun', 'kon', 'paatrata', 'paatra', 'पात्रता', 'पात्र', 'પાત્રતા', 'પાત્ર',
-      'document', 'documents', 'proof', 'kagaz', 'kya chahiye', 'kaagaz', 'दस्तावेज', 'કાગળો', 'દસ્તાવેજો',
-      'apply', 'application', 'process', 'kaise kare', 'kaise banaye', 'કઈ રીતે', 'અરજી', 'आवेदन', 'प्रक्रिया',
-      'benefit', 'amount', 'paisa', 'rs', 'lakh', 'instalment', 'installment', 'लाभ', 'रुपये', 'હપ્તો',
-      'last date', 'deadline', 'validity', 'expiry', 'end date', 'kab tak', 'अंतिम तिथि', 'છેલ્લી તારીખ'
-    ];
+function isLiveContentSufficient(extractedLive: string, query: string, serviceId?: string): boolean {
+  if (!extractedLive || extractedLive.trim().length === 0) {
+    return false;
+  }
 
-    if (guidelineIntents.some(intent => queryLower.includes(intent))) {
+  const contentLower = extractedLive.toLowerCase();
+  const queryLower = query.toLowerCase();
+
+  // Check for generic services portal / directory boilerplate
+  const isPortalBoilerplate =
+    contentLower.includes('services | national portal of india') ||
+    contentLower.includes('access over 0 government services') ||
+    contentLower.includes('suggest / report a service') ||
+    contentLower.includes('streamline your interactions and save time');
+
+  if (isPortalBoilerplate) {
+    // Scheme specifics check
+    const specificSchemeTerms = [
+      'tahsildar', 'mamlatdar', 'salary slip', 'form 16', 'annual income', 'financial year',
+      'patwari', 'talati', 'landholding', 'cultivable land', '5 lakh', 'pmjay'
+    ];
+    const hasSpecifics = specificSchemeTerms.some(term => contentLower.includes(term));
+    if (!hasSpecifics) {
       return false;
     }
   }
 
-  const queryLower = query.toLowerCase();
-  const contentLower = extractedLive.toLowerCase();
+  // If service is income_certificate, ensure live text actually has income certificate specifics
+  if (serviceId === 'income_certificate') {
+    const icTerms = ['tahsildar', 'mamlatdar', 'salary slip', 'annual income', 'form 16', 'patwari', 'talati', 'revenue officer', 'self-declaration', 'validity'];
+    const matchedCount = icTerms.filter(t => contentLower.includes(t)).length;
+    if (matchedCount < 1) {
+      return false;
+    }
+  }
 
   const guidelineIntents = [
     'eligibility', 'eligible', 'who can', 'kaun', 'kon', 'paatrata', 'paatra', 'पात्रता', 'पात्र', 'પાત્રતા', 'पात्र',
     'document', 'documents', 'proof', 'kagaz', 'kya chahiye', 'kaagaz', 'दस्तावेज', 'કાગળો', 'દસ્તાવેજો',
     'apply', 'application', 'process', 'kaise kare', 'kaise banaye', 'કઈ રીતે', 'અરજી', 'आवेदन', 'प्रक्रिया',
-    'last date', 'deadline', 'validity', 'expiry', 'end date', 'kab tak', 'अंतिम तिथि', 'છેલ્લી તારીખ'
+    'benefit', 'benefits', 'uses', 'use', 'amount', 'paisa', 'rs', 'lakh', 'instalment', 'installment', 'लाभ', 'रुपये', 'હપ્તો',
+    'last date', 'deadline', 'validity', 'valid', 'expiry', 'end date', 'kab tak', 'अंतिम तिथि', 'છેલ્લી તારીખ',
+    'fee', 'fees', 'cost', 'charge', 'charges', 'time', 'how long', 'duration', 'days', 'where', 'office', 'where can',
+    'aadhaar', 'ration', 'affidavit', 'bank', 'what is', 'overview', 'definition', 'kya hai', 'shu che', 'શું છે', 'क्या है'
   ];
+
+  if (extractedLive.trim().length < 400) {
+    if (guidelineIntents.some(intent => queryLower.includes(intent))) {
+      return false;
+    }
+  }
+
+  const docIntents = ['document', 'documents', 'proof', 'kagaz', 'kya chahiye', 'kaagaz', 'दस्तावेज', 'કાગળો', 'દસ્તાવેજો'];
+  if (docIntents.some(intent => queryLower.includes(intent))) {
+    const docTerms = ['required documents', 'documents required', 'land record', 'land records', 'salary slip', 'voter id', 'ration card', 'bank account', 'passbook', 'khatiyan', '7/12', 'identity proof'];
+    const docFound = docTerms.some(term => contentLower.includes(term));
+    if (!docFound) {
+      return false;
+    }
+  }
 
   if (guidelineIntents.some(intent => queryLower.includes(intent))) {
     const concreteTerms = [
@@ -316,12 +351,18 @@ async function fetchPibAyushmanFallback(query: string): Promise<PibFallbackResul
 function isPlausibleFollowUp(query: string): boolean {
   const q = query.toLowerCase();
   const followUpKeywords = [
-    'eligible', 'eligibility', 'who', 'who is', 'who can', 'document', 'documents', 'proof',
-    'apply', 'application', 'process', 'how', 'how to', 'how can', 'benefit', 'benefits',
+    // English
+    'eligible', 'eligibility', 'who', 'who is', 'who can', 'document', 'documents', 'proof', 'papers', 'paper',
+    'apply', 'application', 'process', 'how', 'how to', 'how can', 'benefit', 'benefits', 'uses', 'use',
     'amount', 'money', 'paisa', 'kist', 'installment', 'status', 'update', 'updates', 'latest',
-    'rule', 'rules', 'form', 'card', 'last date', 'deadline', 'validity', 'aadhaar', 'age', 'limit',
-    'kya', 'kaise', 'kaun', 'kitna', 'kab', 'पात्रता', 'पात्र', 'दस्तावेज', 'आवेदन', 'लाभ', 'किस्त',
-    'કઈ રીતે', 'કોણ', 'પાત્રતા', 'દસ્તાવેજો', 'અરજી', 'લાભ', 'હપ્તો'
+    'rule', 'rules', 'form', 'card', 'last date', 'deadline', 'validity', 'valid', 'expiry', 'aadhaar', 'age', 'limit',
+    'fee', 'fees', 'cost', 'charge', 'charges', 'duration', 'time', 'days', 'where', 'where can', 'where do', 'office', 'centre', 'center',
+    // Hindi & Transliterated
+    'kya', 'kaise', 'kaun', 'kitna', 'kab', 'kaha', 'kahan', 'paatrata', 'paatra', 'kagaz', 'kaagaz', 'shulk',
+    'पात्रता', 'पात्र', 'दस्तावेज', 'कागज', 'आवेदन', 'लाभ', 'किस्त', 'फीस', 'शुल्क', 'खर्च', 'समय', 'दिन', 'कहाँ', 'कार्यालय', 'वैधता',
+    // Gujarati & Transliterated
+    'shu', 'kevi', 'rite', 'kon', 'kaya', 'ketla', 'kare', 'dakhlo', 'kharch',
+    'કઈ રીતે', 'કોણ', 'પાત્રતા', 'દસ્તાવેજો', 'કાગળો', 'કાગળ', 'અરજી', 'લાભ', 'હપ્તો', 'ફી', 'ખર્ચ', 'સમય', 'દિવસ', 'ક્યાં', 'ઓફિસ', 'માન્યતા'
   ];
   return followUpKeywords.some(kw => q.includes(kw)) || hasGenericGovTerms(query);
 }
@@ -447,11 +488,15 @@ export async function retrieveOfficialInfo(query: string, fallbackSourceId?: str
 
   // 4. Determine Sufficiency & Combined Context
   let finalContent = '';
-  const freshDataAvailable = !!extractedLive && extractedLive.length > 0;
+  const isPortalBoilerplate =
+    extractedLive !== null &&
+    (extractedLive.toLowerCase().includes('services | national portal of india') ||
+     extractedLive.toLowerCase().includes('access over 0 government services'));
+  const freshDataAvailable = !!extractedLive && extractedLive.length > 0 && !(source.id === 'income_certificate' && isPortalBoilerplate);
 
   if (extractedLive) {
     liveCharCount = extractedLive.length;
-    const sufficient = isLiveContentSufficient(extractedLive, query);
+    const sufficient = isLiveContentSufficient(extractedLive, query, source.id);
 
     if (sufficient && !pibAttempted) {
       retrievalMethod = 'live_fetch';
