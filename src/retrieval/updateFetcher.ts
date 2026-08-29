@@ -124,10 +124,87 @@ function inferCategory(title: string): 'pm_kisan' | 'ayushman_bharat' | 'income_
   if (lower.includes('ayushman') || lower.includes('health') || lower.includes('hospital') || lower.includes('medical') || lower.includes('pmjay')) {
     return 'ayushman_bharat';
   }
-  if (lower.includes('income') || lower.includes('tax') || lower.includes('revenue') || lower.includes('finance') || lower.includes('bank')) {
+  if (lower.includes('income') || lower.includes('tax') || lower.includes('revenue') || lower.includes('finance') || lower.includes('bank') || lower.includes('certificate')) {
     return 'income_certificate';
   }
   return 'pm_kisan';
+}
+
+/**
+ * Infers official Ministry / Department information from the press release title.
+ */
+function inferDepartment(title: string): { en: string; hi: string; gu: string } {
+  const lower = title.toLowerCase();
+
+  if (lower.includes('agriculture') || lower.includes('kisan') || lower.includes('farmer') || lower.includes('fasal') || lower.includes('krishi')) {
+    return {
+      en: 'Ministry of Agriculture and Farmers Welfare',
+      hi: 'कृषि एवं किसान कल्याण मंत्रालय',
+      gu: 'કૃષિ અને ખેડૂત કલ્યાણ મંત્રાલય'
+    };
+  }
+  if (lower.includes('health') || lower.includes('ayushman') || lower.includes('pmjay') || lower.includes('hospital') || lower.includes('medical') || lower.includes('swasthya')) {
+    return {
+      en: 'Ministry of Health and Family Welfare',
+      hi: 'स्वास्थ्य एवं परिवार कल्याण मंत्रालय',
+      gu: 'સ્વાસ્થ્ય અને પરિવાર કલ્યાણ મંત્રાલય'
+    };
+  }
+  if (lower.includes('housing') || lower.includes('pmay') || lower.includes('awas') || lower.includes('urban')) {
+    return {
+      en: 'Ministry of Housing and Urban Affairs',
+      hi: 'आवासन और शहरी कार्य मंत्रालय',
+      gu: 'આવાસ અને શહેરી બાબતોનું મંત્રાલય'
+    };
+  }
+  if (lower.includes('finance') || lower.includes('tax') || lower.includes('revenue') || lower.includes('bank') || lower.includes('mudra') || lower.includes('cbn') || lower.includes('narcotics')) {
+    return {
+      en: 'Ministry of Finance (Government of India)',
+      hi: 'वित्त मंत्रालय (भारत सरकार)',
+      gu: 'નાણા મંત્રાલય (ભારત સરકાર)'
+    };
+  }
+  if (lower.includes('labour') || lower.includes('shram') || lower.includes('worker') || lower.includes('employment')) {
+    return {
+      en: 'Ministry of Labour and Employment',
+      hi: 'श्रम एवं रोजगार मंत्रालय',
+      gu: 'શ્રમ અને રોજગાર મંત્રાલય'
+    };
+  }
+  if (lower.includes('textile') || lower.includes('textiles') || lower.includes('vastr')) {
+    return {
+      en: 'Ministry of Textiles (Government of India)',
+      hi: 'वस्त्र मंत्रालय (भारत सरकार)',
+      gu: 'કાપડ મંત્રાલય (ભારત સરકાર)'
+    };
+  }
+  if (lower.includes('rural') || lower.includes('pmgsy') || lower.includes('panchayat') || lower.includes('gramin')) {
+    return {
+      en: 'Ministry of Rural Development',
+      hi: 'ग्रामीण विकास मंत्रालय',
+      gu: 'ગ્રામીણ વિકાસ મંત્રાલય'
+    };
+  }
+  if (lower.includes('education') || lower.includes('scholarship') || lower.includes('student') || lower.includes('shiksha')) {
+    return {
+      en: 'Ministry of Education (Government of India)',
+      hi: 'शिक्षा मंत्रालय (भारत सरकार)',
+      gu: 'શિક્ષણ મંત્રાલય (ભારત સરકાર)'
+    };
+  }
+  if (lower.includes('electronics') || lower.includes('meity') || lower.includes('digital') || lower.includes('it ')) {
+    return {
+      en: 'Ministry of Electronics and Information Technology',
+      hi: 'इलेक्ट्रॉनिक्स और सूचना प्रौद्योगिकी मंत्रालय',
+      gu: 'ઇલેક્ટ્રોનિક્સ અને ઇન્ફોર્મેશન ટેકનોલોજી મંત્રાલય'
+    };
+  }
+
+  return {
+    en: 'Press Information Bureau (Government of India)',
+    hi: 'प्रेस सूचना ब्यूरो (भारत सरकार)',
+    gu: 'પ્રેસ ઇન્ફર્મેશન બ્યુરો (ભારત સરકાર)'
+  };
 }
 
 /**
@@ -165,17 +242,18 @@ export async function fetchLiveGovernmentUpdates(): Promise<GovernmentUpdate[] |
     return null;
   }
 
-  // Map Hindi items by PRID or index for multilingual matching
+  // Map Hindi items by PRID for strict matching
   const hiByPrid = new Map<string, string>();
   hiItems.forEach(item => {
     if (item.prid) hiByPrid.set(item.prid, item.title);
   });
 
   const updates: GovernmentUpdate[] = enItems.slice(0, 6).map((enItem, idx) => {
-    // Determine Hindi title match by PRID or fallback to indexed Hindi item or English title
-    const hiTitle = (enItem.prid && hiByPrid.get(enItem.prid)) || (hiItems[idx] ? hiItems[idx].title : enItem.title);
+    // Determine Hindi title match by exact PRID or fallback to English title (prevent cross-story mismatch)
+    const hiTitle = (enItem.prid && hiByPrid.get(enItem.prid)) || enItem.title;
     const formattedDate = formatPublicationDate(enItem.pubDate);
     const category = inferCategory(enItem.title);
+    const department = inferDepartment(enItem.title);
 
     return {
       id: `pib_live_${enItem.prid || idx}_${Date.now()}`,
@@ -185,18 +263,14 @@ export async function fetchLiveGovernmentUpdates(): Promise<GovernmentUpdate[] |
         gu: enItem.title // Fallback for Gujarati as supported by UI
       },
       summary: {
-        en: `Official Press Information Bureau release: ${enItem.title}`,
-        hi: `आधिकारिक प्रेस सूचना ब्यूरो विज्ञप्ति: ${hiTitle}`,
-        gu: `સત્તાવાર પ્રેસ ઇન્ફર્મેશન બ્યુરો જાહેરાત: ${enItem.title}`
+        en: `Official government release: ${enItem.title}. Access official details via the source link below.`,
+        hi: `आधिकारिक सरकारी विज्ञप्ति: ${hiTitle}। नीचे दिए गए स्रोत लिंक के माध्यम से आधिकारिक विवरण प्राप्त करें।`,
+        gu: `સત્તાવાર સરકારી જાહેરાત: ${enItem.title}. નીચે આપેલ લિંક દ્વારા સત્તાવાર વિગતો મેળવો.`
       },
-      department: {
-        en: 'Press Information Bureau (Government of India)',
-        hi: 'प्रेस सूचना ब्यूरो (भारत सरकार)',
-        gu: 'પ્રેસ ઇન્ફર્મેશન બ્યુરો (ભારત સરકાર)'
-      },
+      department,
       date: formattedDate,
       sourceUrl: enItem.link,
-      sourceName: 'PIB Press Information Bureau',
+      sourceName: department.en,
       category
     };
   });

@@ -23,4 +23,4 @@ export default function AnimatedPage({ children, className = '' }: AnimatedPageP
       {children}
     </div>
   );
-}
+}      

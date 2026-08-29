@@ -132,8 +132,10 @@ export function matchQueryWithScore(query: string): MatchResult {
       const normKeyword = normalizeText(keyword);
       if (!normKeyword) continue;
       
-      // For short single-word keywords (<= 4 chars), require exact word boundary to prevent substring false positives
-      if (normKeyword.length <= 4) {
+      const isNonAscii = /[^\x00-\x7F]/.test(normKeyword);
+
+      // For short single-word ASCII keywords (<= 4 chars), require exact word boundary to prevent substring false positives
+      if (normKeyword.length <= 4 && !isNonAscii) {
         const regex = new RegExp(`\\b${normKeyword}\\b`, 'i');
         if (regex.test(normalizedQuery)) {
           score += 2;
