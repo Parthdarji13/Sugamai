@@ -1,6 +1,8 @@
 'use client';
 
 import React from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { Message } from '@/types/chat';
 
 interface MessageBubbleProps {
@@ -13,16 +15,12 @@ interface MessageBubbleProps {
     };
     assistantLabel: string;
     userLabel: string;
+    isStreaming?: boolean;
 }
 
-function formatAnswer(raw: string): string {
-    return raw
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-        .replace(/\n{2,}/g, '</p><p>')
-        .replace(/\n/g, '<br />');
-}
 
-export default function MessageBubble({ message, text, assistantLabel, userLabel }: MessageBubbleProps) {
+
+export default function MessageBubble({ message, text, assistantLabel, userLabel, isStreaming }: MessageBubbleProps) {
     const isAI = message.sender === 'assistant';
 
     return (
@@ -47,7 +45,7 @@ export default function MessageBubble({ message, text, assistantLabel, userLabel
             </div>
 
             <div
-                className={`relative max-w-[88%] rounded-2xl border p-4 text-sm shadow-sm sm:max-w-[85%] ${isAI ? 'text-[var(--text-primary)]' : 'text-white'
+                className={`relative max-w-[88%] rounded-2xl border p-4 text-sm shadow-sm sm:max-w-[85%] ${isAI ? 'text-[var(--text-secondary)]' : 'text-white'
                     }`}
                 style={
                     isAI
@@ -59,10 +57,31 @@ export default function MessageBubble({ message, text, assistantLabel, userLabel
                 }
             >
                 {message.text ? (
-                    <div
-                        className="prose-answer text-xs font-medium leading-relaxed tracking-wide sm:text-sm"
-                        dangerouslySetInnerHTML={{ __html: `<p>${formatAnswer(message.text)}</p>` }}
-                    />
+                    <div className="flex items-baseline inline">
+                        <div className={`prose-answer text-xs font-normal leading-relaxed tracking-wide sm:text-sm inline ${isStreaming ? 'streaming-text' : ''}`}>
+                            <ReactMarkdown
+                                remarkPlugins={[remarkGfm]}
+                                components={{
+                                h1: ({ node, ...props }) => <h2 className="text-base sm:text-lg font-black text-white tracking-tight mt-5 mb-2 flex items-center gap-2 border-b border-white/10 pb-1.5" {...props} />,
+                                h2: ({ node, ...props }) => <h3 className="text-sm sm:text-base font-bold text-[var(--accent-strong)] tracking-tight mt-4 mb-2 flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-[var(--accent)]"></span>{props.children}</h3>,
+                                h3: ({ node, ...props }) => <h4 className="text-xs sm:text-sm font-bold text-white tracking-wide mt-3 mb-1 uppercase text-[var(--accent)]" {...props} />,
+                                strong: ({ node, ...props }) => <strong className="font-bold text-white bg-white/10 px-1.5 py-0.5 rounded text-[12px] sm:text-[13px] border border-white/10" {...props} />,
+                                em: ({ node, ...props }) => <em className="text-[var(--text-secondary)] italic" {...props} />,
+                                hr: ({ node, ...props }) => <div className="my-3.5 h-[1px] w-full bg-[var(--border-strong)]" />,
+                                p: ({ node, ...props }) => <p className="mb-3 text-xs sm:text-sm text-[var(--text-secondary)] leading-relaxed last:mb-0 inline-block w-full" {...props} />,
+                                ul: ({ node, ...props }) => <ul className="my-2 space-y-1.5 list-none pl-0" {...props} />,
+                                ol: ({ node, ...props }) => <ol className="my-2 space-y-1.5 list-decimal pl-4" {...props} />,
+                                li: ({ node, ...props }) => <li className="text-[var(--text-secondary)] text-xs sm:text-sm my-1 leading-relaxed relative" {...props} />,
+                                a: ({ node, ...props }) => <a className="text-[var(--accent)] underline hover:text-[var(--accent-strong)]" target="_blank" rel="noopener noreferrer" {...props} />
+                            }}
+                        >
+                            {message.text}
+                        </ReactMarkdown>
+                        </div>
+                        {isStreaming && (
+                            <span className="inline-block h-3.5 w-1.5 ml-1 bg-[var(--accent)] animate-pulse rounded-sm align-middle shadow-[0_0_8px_var(--accent)]" />
+                        )}
+                    </div>
                 ) : (
                     <div className="flex items-center gap-1.5 py-0.5">
                         {[0, 1, 2].map((i) => (

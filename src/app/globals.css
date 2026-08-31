@@ -569,8 +569,21 @@ body {
 }
 
 /* ═══════════════════════════════════════════
-   Answer prose formatting
+   Answer prose formatting & Streaming text reveal
    ═══════════════════════════════════════════ */
+@keyframes textGlowReveal {
+  0% {
+    text-shadow: 0 0 10px rgba(59, 130, 246, 0.6);
+  }
+  100% {
+    text-shadow: none;
+  }
+}
+
+.streaming-text {
+  animation: textGlowReveal 0.4s ease-out;
+}
+
 .prose-answer p {
   margin-bottom: 0.7rem;
   line-height: 1.65;

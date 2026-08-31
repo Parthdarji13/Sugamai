@@ -12,8 +12,8 @@ const LOCAL_TEXT = {
     sectionTag: 'INTELLIGENCE FEED',
     sectionTitle: 'Latest Government Updates',
     sectionSubtitle: "What's happening across Government",
-    liveBadge: 'OFFICIAL FEED',
-    liveStatus: 'Today / Live',
+    liveBadge: 'SAMPLE UPDATES',
+    liveStatus: 'Examples',
     featuredBadge: 'FEATURED DISPATCH',
     streamBadge: 'RECENT BULLETINS',
     deptLabel: 'Department',
@@ -30,8 +30,8 @@ const LOCAL_TEXT = {
     sectionTag: 'सूचना तंत्र',
     sectionTitle: 'ताज़ा सरकारी अपडेट',
     sectionSubtitle: 'सरकार भर में क्या हो रहा है',
-    liveBadge: 'आधिकारिक फीड',
-    liveStatus: 'आज / लाइव',
+    liveBadge: 'नमूना अपडेट',
+    liveStatus: 'उदाहरण',
     featuredBadge: 'मुख्य विज्ञप्ति',
     streamBadge: 'हालिया बुलेटिन',
     deptLabel: 'विभाग',
@@ -48,8 +48,8 @@ const LOCAL_TEXT = {
     sectionTag: 'માહિતી પ્રવાહ',
     sectionTitle: 'તાજેતરના સરકારી અપડેટ',
     sectionSubtitle: 'સરકારભરમાં શું થઈ રહ્યું છે',
-    liveBadge: 'સત્તાવાર ફીડ',
-    liveStatus: 'આજે / લાઈવ',
+    liveBadge: 'નમૂના અપડેટ્સ',
+    liveStatus: 'ઉદાહરણો',
     featuredBadge: 'મુખ્ય જાહેરાત',
     streamBadge: 'તાજેતરના બુલેટિન',
     deptLabel: 'વિભાગ',
@@ -217,8 +217,7 @@ export default function LatestGovernmentUpdates({ language }: LatestGovernmentUp
           style={{ borderColor: 'var(--border-strong)', background: 'var(--surface)' }}
         >
           <span className="relative flex h-2 w-2">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-75" style={{ background: 'var(--accent)' }} />
-            <span className="relative inline-flex h-2 w-2 rounded-full" style={{ background: 'var(--accent)' }} />
+            <span className="relative inline-flex h-2 w-2 rounded-full" style={{ background: 'var(--text-muted)' }} />
           </span>
           <div className="flex flex-col text-left">
             <span className="font-mono text-[10px] font-bold tracking-wider text-white">
@@ -388,7 +387,7 @@ export default function LatestGovernmentUpdates({ language }: LatestGovernmentUp
           {/* Footer note */}
           <div className="mt-4 border-t pt-3 text-right" style={{ borderColor: 'var(--border)' }}>
             <span className="font-mono text-[9px] text-[var(--text-muted)]">
-              SYNCED WITH OFFICIAL GOVERNMENT PRESS FEEDS
+              EXAMPLE UPDATES FOR DEMONSTRATION
             </span>
           </div>
         </div>

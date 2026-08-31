@@ -10,7 +10,7 @@ export async function POST(req: Request) {
   const TOTAL_BUDGET_MS = 25000;
 
   try {
-    const { message, language, lastMatchedSourceId } = await req.json();
+    const { message, language, lastMatchedSourceId, history } = await req.json();
 
     if (!message || message.trim() === '') {
       console.timeEnd('total-request');
@@ -59,23 +59,33 @@ export async function POST(req: Request) {
     const isFreshnessUnverified = retrievalResult.isFreshnessQuery && !retrievalResult.freshDataAvailable;
 
     let demoAnswer = '';
-    if (isSupported && runInDemoMode) {
+    if (runInDemoMode) {
       console.warn('GEMINI_API_KEY is not set in environment variables. Running in Demo Mode.');
-      if (isFreshnessUnverified) {
-        if (selectedLanguage === 'hi') {
-          demoAnswer = `**[डेमो मोड - जीमिनी API कुंजी कॉन्फ़िगर नहीं है]**\n\nमुझे वर्तमान में आधिकारिक सरकारी स्रोतों से **${retrievalResult.serviceName || 'सरकारी योजना'}** के लिए किसी हालिया आधिकारिक अपडेट की पुष्टि नहीं हो सकी। मैं सत्यापित सामान्य दिशानिर्देश प्रदान कर सकता हूँ, लेकिन पुरानी जानकारी को नवीनतम अपडेट के रूप में प्रस्तुत नहीं करना चाहता:\n\n${relevantContent}\n\n*कृपया इस प्रोजेक्ट को चलाने के लिए \`frontend/.env.local\` में अपनी \`GEMINI_API_KEY\` जोड़ें।*`;
-        } else if (selectedLanguage === 'gu') {
-          demoAnswer = `**[ડેમો મોડ - જેમિની API કી સેટ નથી]**\n\nમને હાલમાં સત્તાવાર સરકારી સ્ત્રોતોમાંથી **${retrievalResult.serviceName || 'સરકારી યોજના'}** માટે કોઈ તાજા સત્તાવાર અપડેટની ચકાસણી મળી શકી નથી. હું ચકાસાયેલ સામાન્ય માર્ગદર્શિકા પ્રદાન કરી શકું છું, પરંતુ જૂની માહિતીને તાજા અપડેટ તરીકે રજૂ કરવા માંગતો નથી:\n\n${relevantContent}\n\n*કૃપા કરીને આ પ્રોજેક્ટ ચલાવવા માટે \`frontend/.env.local\` માં તમારી \`GEMINI_API_KEY\` ઉમેરો.*`;
+      if (isSupported) {
+        if (isFreshnessUnverified) {
+          if (selectedLanguage === 'hi') {
+            demoAnswer = `**[डेमो मोड - जीमिनी API कुंजी कॉन्फ़िगर नहीं है]**\n\nमुझे वर्तमान में आधिकारिक सरकारी स्रोतों से **${retrievalResult.serviceName || 'सरकारी योजना'}** के लिए किसी हालिया आधिकारिक अपडेट की पुष्टि नहीं हो सकी। मैं सत्यापित सामान्य दिशानिर्देश प्रदान कर सकता हूँ, लेकिन पुरानी जानकारी को नवीनतम अपडेट के रूप में प्रस्तुत नहीं करना चाहता:\n\n${relevantContent}\n\n*कृपया इस प्रोजेक्ट को चलाने के लिए \`frontend/.env.local\` में अपनी \`GEMINI_API_KEY\` जोड़ें।*`;
+          } else if (selectedLanguage === 'gu') {
+            demoAnswer = `**[ડેમો મોડ - જેમિની API કી સેટ નથી]**\n\nમને હાલમાં સત્તાવાર સરકારી સ્ત્રોતોમાંથી **${retrievalResult.serviceName || 'સરકારી યોજના'}** માટે કોઈ તાજા સત્તાવાર અપડેટની ચકાસણી મળી શકી નથી. હું ચકાસાયેલ સામાન્ય માર્ગદર્શિકા પ્રદાન કરી શકું છું, પરંતુ જૂની માહિતીને તાજા અપડેટ તરીકે રજૂ કરવા માંગતો નથી:\n\n${relevantContent}\n\n*કૃપા કરીને આ પ્રોજેક્ટ ચલાવવા માટે \`frontend/.env.local\` માં તમારી \`GEMINI_API_KEY\` ઉમેરો.*`;
+          } else {
+            demoAnswer = `**[Demo Mode - Gemini API Key Not Configured]**\n\nI couldn't verify a recent official update for **${retrievalResult.serviceName || 'Government Scheme'}** from available government sources right now. I can provide the verified general guideline information, but I don't want to present older information as the latest update:\n\n${relevantContent}\n\n*Please add your \`GEMINI_API_KEY\` in \`frontend/.env.local\` to run the live AI summarizer.*`;
+          }
         } else {
-          demoAnswer = `**[Demo Mode - Gemini API Key Not Configured]**\n\nI couldn't verify a recent official update for **${retrievalResult.serviceName || 'Government Scheme'}** from available government sources right now. I can provide the verified general guideline information, but I don't want to present older information as the latest update:\n\n${relevantContent}\n\n*Please add your \`GEMINI_API_KEY\` in \`frontend/.env.local\` to run the live AI summarizer.*`;
+          if (selectedLanguage === 'hi') {
+            demoAnswer = `**[डेमो मोड - जीमिनी API कुंजी कॉन्फ़िगर नहीं है]**\n\nयहाँ **${retrievalResult.serviceName || 'सरकारी योजना'}** के बारे में आधिकारिक जानकारी दी गई है:\n\n${relevantContent}\n\n*कृपया इस प्रोजेक्ट को चलाने के लिए \`frontend/.env.local\` में अपनी \`GEMINI_API_KEY\` जोड़ें।*`;
+          } else if (selectedLanguage === 'gu') {
+            demoAnswer = `**[ડેમો મોડ - જેમિની API કી સેટ નથી]**\n\nઅહીં **${retrievalResult.serviceName || 'સરકારી યોજના'}** વિશેની સત્તાવાર માહિતી છે:\n\n${relevantContent}\n\n*કૃપા કરીને આ પ્રોજેક્ટ ચલાવવા માટે \`frontend/.env.local\` માં તમારી \`GEMINI_API_KEY\` ઉમેરો.*`;
+          } else {
+            demoAnswer = `**[Demo Mode - Gemini API Key Not Configured]**\n\nHere is the official information retrieved for **${retrievalResult.serviceName || 'Government Scheme'}**:\n\n${relevantContent}\n\n*Please add your \`GEMINI_API_KEY\` in \`frontend/.env.local\` to run the live AI summarizer.*`;
+          }
         }
       } else {
         if (selectedLanguage === 'hi') {
-          demoAnswer = `**[डेमो मोड - जीमिनी API कुंजी कॉन्फ़िगर नहीं है]**\n\nयहाँ **${retrievalResult.serviceName || 'सरकारी योजना'}** के बारे में आधिकारिक जानकारी दी गई है:\n\n${relevantContent}\n\n*कृपया इस प्रोजेक्ट को चलाने के लिए \`frontend/.env.local\` में अपनी \`GEMINI_API_KEY\` जोड़ें।*`;
+          demoAnswer = `**[डेमो मोड]**\n\nमुझे इस प्रश्न के लिए आधिकारिक सरकारी स्रोतों से सत्यापित जानकारी नहीं मिल सकी। लाइव AI काम नहीं कर रहा है।`;
         } else if (selectedLanguage === 'gu') {
-          demoAnswer = `**[ડેમો મોડ - જેમિની API કી સેટ નથી]**\n\nઅહીં **${retrievalResult.serviceName || 'સરકારી યોજના'}** વિશેની સત્તાવાર માહિતી છે:\n\n${relevantContent}\n\n*કૃપા કરીને આ પ્રોજેક્ટ ચલાવવા માટે \`frontend/.env.local\` માં તમારી \`GEMINI_API_KEY\` ઉમેરો.*`;
+          demoAnswer = `**[ડેમો મોડ]**\n\nમને આ પ્રશ્ન માટે સત્તાવાર સરકારી સ્ત્રોતોમાંથી ચકાસાયેલ માહિતી મળી શકી નથી. લાઈવ AI કામ કરી રહ્યું નથી.`;
         } else {
-          demoAnswer = `**[Demo Mode - Gemini API Key Not Configured]**\n\nHere is the official information retrieved for **${retrievalResult.serviceName || 'Government Scheme'}**:\n\n${relevantContent}\n\n*Please add your \`GEMINI_API_KEY\` in \`frontend/.env.local\` to run the live AI summarizer.*`;
+          demoAnswer = `**[Demo Mode]**\n\nI couldn't find verified information from an official government source for this query. Live AI is disabled without an API key.`;
         }
       }
     }
@@ -114,16 +124,21 @@ Instructions:
 5. ONLY output exactly: "I couldn't find verified information from an official government source for this query." if the user query is asking about a completely unrelated topic or scheme not covered in the text above. Translate this phrase to the selected language if necessary.
 6. Do not mention any unofficial sites or blogs. Only refer to the provided official source and its URL.
 7. Translate and answer in the user's selected language: ${languageName}.
-8. Keep the answer structured and clean. Use bolding and markdown lists. Cover all relevant details from the retrieved text: eligibility, benefit amount, documents required, and application process.${freshnessGroundingRule}
-` : '';
+8. Structure your answer using "## Section Title" for major topics (e.g. "## Eligibility Criteria", "## Required Documents", "## Application Process", "## Key Benefits"). Use bolding ("**key term**") for important numbers, amounts, ages, and document names so they stand out clearly for the citizen. Keep the tone helpful, polite, and clear.${freshnessGroundingRule}
+` : `You are SugamGov AI, an intelligent government service assistant for citizens of India.
+The citizen has asked a question, but no specific local official government document was retrieved for it.
+Please answer the question accurately and politely using your general knowledge about government schemes, documents, and public services.
+If the question is completely unrelated to government services, public schemes, or citizen rights, politely guide the user back to government-related topics.
+Translate and answer in the user's selected language: ${languageName}.
+Structure your response using "## Section Title" for major topics (e.g. "## Scheme Overview", "## Eligibility", "## How to Apply"). Use bolding ("**key term**") for important numbers, fees, and requirements so they stand out clearly.`;
 
     // Quota-Aware & Resilient Gemini Cascade (No Retries on 429 or 503)
     let result = null;
-    if (isSupported && !runInDemoMode) {
+    if (!runInDemoMode) {
       const genAI = new GoogleGenerativeAI(apiKey!);
       let lastError: Error | null = null;
       // Ordered cascade: newest/fastest first → resilient fallbacks
-      const CASCADE_MODELS = ['gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3.5-flash-lite', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+      const CASCADE_MODELS = ['gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3.5-flash-lite'];
 
       for (let i = 0; i < CASCADE_MODELS.length; i++) {
         const modelName = CASCADE_MODELS[i];
@@ -148,8 +163,15 @@ Instructions:
             systemInstruction: systemPrompt
           });
 
+          const recentHistory = (history || []).slice(-6);
           const streamPromise = model.generateContentStream({
-            contents: [{ role: "user", parts: [{ text: message }] }],
+            contents: [
+              ...recentHistory.map((msg: any) => ({
+                role: msg.sender === 'user' ? 'user' : 'model',
+                parts: [{ text: msg.text }]
+              })),
+              { role: "user", parts: [{ text: message }] }
+            ],
             generationConfig: {
               // Note: temperature is deprecated in Gemini 3.x and silently ignored.
               // Removed to avoid future HTTP 400 INVALID_ARGUMENT errors.
@@ -274,34 +296,26 @@ Instructions:
           }
         };
 
-        // If no source matches
-        if (!isSupported) {
+        // Send metadata first
+        if (isSupported) {
+          sendJSON({
+            type: 'metadata',
+            officialSource: retrievalResult.sourceTitle,
+            sourceUrl: retrievalResult.sourceUrl,
+            retrievalMethod: retrievalResult.retrievalMethod,
+            isSupported: true,
+            serviceId: retrievalResult.serviceId,
+            isFreshnessQuery: retrievalResult.isFreshnessQuery,
+            freshDataAvailable: retrievalResult.freshDataAvailable
+          });
+        } else {
           sendJSON({
             type: 'metadata',
             officialSource: 'SugamGov AI System',
             retrievalMethod: 'unmatched_default',
             isSupported: false
           });
-          sendJSON({
-            type: 'chunk',
-            text: rejectedAnswer
-          });
-          controller.close();
-          console.timeEnd('total-request');
-          return;
         }
-
-        // Send metadata first
-        sendJSON({
-          type: 'metadata',
-          officialSource: retrievalResult.sourceTitle,
-          sourceUrl: retrievalResult.sourceUrl,
-          retrievalMethod: retrievalResult.retrievalMethod,
-          isSupported: true,
-          serviceId: retrievalResult.serviceId,
-          isFreshnessQuery: retrievalResult.isFreshnessQuery,
-          freshDataAvailable: retrievalResult.freshDataAvailable
-        });
 
         // If Demo Mode
         if (runInDemoMode) {
