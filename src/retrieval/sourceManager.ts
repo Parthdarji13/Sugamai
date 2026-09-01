@@ -348,7 +348,7 @@ async function fetchPibAyushmanFallback(query: string): Promise<PibFallbackResul
  * Determines whether a query is a plausible follow-up related to government schemes/services
  * rather than a completely unrelated general knowledge query.
  */
-function isPlausibleFollowUp(query: string): boolean {
+export function isPlausibleFollowUp(query: string): boolean {
   const q = query.toLowerCase();
   const followUpKeywords = [
     // English

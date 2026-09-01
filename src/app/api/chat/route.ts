@@ -1,5 +1,5 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { retrieveOfficialInfo } from '@/retrieval/sourceManager';
+import { retrieveHybridOfficialInfo } from '@/retrieval/hybrid';
 import { isQuotaExceededError, isAuthConfigError, isTimeoutError, isTemporaryModelError, classifyModelError } from '@/utils/gemini';
 import type { Message } from '@/types/chat';
 
@@ -25,13 +25,13 @@ export async function POST(req: Request) {
     if (selectedLanguage === 'hi') languageName = 'Hindi';
     if (selectedLanguage === 'gu') languageName = 'Gujarati';
 
-    // 1. Centralized Retrieval (Attempts live GET fetch with 6s timeout, fallback to cached .txt)
+    // 1. Centralized Hybrid Retrieval (Lexical + Semantic Vector + Live Fetch Priority)
     console.time('retrieval-layer');
-    const retrievalResult = await retrieveOfficialInfo(message, lastMatchedSourceId);
+    const retrievalResult = await retrieveHybridOfficialInfo(message, lastMatchedSourceId);
     console.timeEnd('retrieval-layer');
 
     const isSupported = retrievalResult.matched;
-    const relevantContent = retrievalResult.content;
+    const relevantContent = retrievalResult.combinedPromptContext || retrievalResult.primaryContent;
 
     const apiKey = process.env.GEMINI_API_KEY;
     const runInDemoMode = !apiKey || apiKey.trim() === '' || apiKey === 'your_key_here';
@@ -74,7 +74,9 @@ export async function POST(req: Request) {
       ? 'Here is the VERIFIED information retrieved from official government sources (combining live portal updates and verified official guidelines):'
       : (retrievalResult.retrievalMethod === 'live_fetch'
         ? 'Here is the LIVE VERIFIED information retrieved from the official government portal:'
-        : 'Here is the VERIFIED reference information retrieved from official government guidelines:');
+        : (retrievalResult.retrievalMethod === 'semantic_hybrid_rag'
+          ? 'Here is the VERIFIED information retrieved via hybrid official semantic retrieval:'
+          : 'Here is the VERIFIED reference information retrieved from official government guidelines:'));
 
     const freshnessGroundingRule = isFreshnessUnverified
       ? `\nCRITICAL FRESHNESS RULE:
