@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { retrieveOfficialInfo } from '@/retrieval/sourceManager';
-import { hasGenericGovTerms } from '@/retrieval/queryMatcher';
 import { isQuotaExceededError, isAuthConfigError, isTimeoutError, isTemporaryModelError, classifyModelError } from '@/utils/gemini';
+import type { Message } from '@/types/chat';
 
 export async function POST(req: Request) {
   // Start Total Request timer
@@ -31,26 +31,6 @@ export async function POST(req: Request) {
     console.timeEnd('retrieval-layer');
 
     const isSupported = retrievalResult.matched;
-
-    // If query is unsupported or unmatched, compute rejected answer text
-    let rejectedAnswer = "";
-    if (!isSupported) {
-      const isGeneric = hasGenericGovTerms(message);
-      if (selectedLanguage === 'hi') {
-        rejectedAnswer = isGeneric
-          ? "आप किस सरकारी योजना या सेवा की बात कर रहे हैं? वर्तमान में, मैं आपकी पीएम किसान, आयुष्मान भारत, या आय प्रमाण पत्र में मदद कर सकता हूँ। कृपया स्पष्ट करें।"
-          : "मुझे इस प्रश्न के लिए किसी आधिकारिक सरकारी स्रोत से सत्यापित जानकारी नहीं मिल सकी।";
-      } else if (selectedLanguage === 'gu') {
-        rejectedAnswer = isGeneric
-          ? "તમે કઈ સરકારી યોજના અથવા સેવા વિશે પૂછી રહ્યા છો? હાલમાં, હું તમને પીએમ કિસાન, આયુષ્માન ભારત, અથવા આવકનું પ્રમાણપત્ર વિશે માહિતી આપી શકું છું. કૃપા કરીને સ્પષ્ટ કરો।"
-          : "મને આ પ્રશ્ન માટે કોઈ સત્તાવાર સરકારી સ્ત્રોતમાંથી ચકાસણી કરેલી માહિતી મળી શકી નથી.";
-      } else {
-        rejectedAnswer = isGeneric
-          ? "Which government scheme or service are you referring to? Currently, I can help you with PM Kisan, Ayushman Bharat, or Income Certificate. Please specify your query."
-          : "I couldn't find verified information from an official government source for this query.";
-      }
-    }
-
     const relevantContent = retrievalResult.content;
 
     const apiKey = process.env.GEMINI_API_KEY;
@@ -166,7 +146,7 @@ Structure your response using "## Section Title" for major topics (e.g. "## Sche
           const recentHistory = (history || []).slice(-6);
           const streamPromise = model.generateContentStream({
             contents: [
-              ...recentHistory.map((msg: any) => ({
+              ...recentHistory.map((msg: Message) => ({
                 role: msg.sender === 'user' ? 'user' : 'model',
                 parts: [{ text: msg.text }]
               })),

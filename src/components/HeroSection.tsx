@@ -2,10 +2,10 @@
 
 import React from 'react';
 import LatestGovernmentUpdates from '@/components/LatestGovernmentUpdates';
-import { Language } from '@/types/chat';
+import { Language, UIText } from '@/types/chat';
 
 interface HeroSectionProps {
-  text: any;
+  text: UIText;
   input: string;
   setInput: (value: string) => void;
   isLoading: boolean;

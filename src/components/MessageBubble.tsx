@@ -62,18 +62,18 @@ export default function MessageBubble({ message, text, assistantLabel, userLabel
                             <ReactMarkdown
                                 remarkPlugins={[remarkGfm]}
                                 components={{
-                                h1: ({ node, ...props }) => <h2 className="text-base sm:text-lg font-black text-white tracking-tight mt-5 mb-2 flex items-center gap-2 border-b border-white/10 pb-1.5" {...props} />,
-                                h2: ({ node, ...props }) => <h3 className="text-sm sm:text-base font-bold text-[var(--accent-strong)] tracking-tight mt-4 mb-2 flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-[var(--accent)]"></span>{props.children}</h3>,
-                                h3: ({ node, ...props }) => <h4 className="text-xs sm:text-sm font-bold text-white tracking-wide mt-3 mb-1 uppercase text-[var(--accent)]" {...props} />,
-                                strong: ({ node, ...props }) => <strong className="font-bold text-white bg-white/10 px-1.5 py-0.5 rounded text-[12px] sm:text-[13px] border border-white/10" {...props} />,
-                                em: ({ node, ...props }) => <em className="text-[var(--text-secondary)] italic" {...props} />,
-                                hr: ({ node, ...props }) => <div className="my-3.5 h-[1px] w-full bg-[var(--border-strong)]" />,
-                                p: ({ node, ...props }) => <p className="mb-3 text-xs sm:text-sm text-[var(--text-secondary)] leading-relaxed last:mb-0 inline-block w-full" {...props} />,
-                                ul: ({ node, ...props }) => <ul className="my-2 space-y-1.5 list-none pl-0" {...props} />,
-                                ol: ({ node, ...props }) => <ol className="my-2 space-y-1.5 list-decimal pl-4" {...props} />,
-                                li: ({ node, ...props }) => <li className="text-[var(--text-secondary)] text-xs sm:text-sm my-1 leading-relaxed relative" {...props} />,
-                                a: ({ node, ...props }) => <a className="text-[var(--accent)] underline hover:text-[var(--accent-strong)]" target="_blank" rel="noopener noreferrer" {...props} />
-                            }}
+                                    h1: ({ children }) => <h2 className="text-base sm:text-lg font-black text-white tracking-tight mt-5 mb-2 flex items-center gap-2 border-b border-white/10 pb-1.5">{children}</h2>,
+                                    h2: ({ children }) => <h3 className="text-sm sm:text-base font-bold text-[var(--accent-strong)] tracking-tight mt-4 mb-2 flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-[var(--accent)]"></span>{children}</h3>,
+                                    h3: ({ children }) => <h4 className="text-xs sm:text-sm font-bold text-white tracking-wide mt-3 mb-1 uppercase text-[var(--accent)]">{children}</h4>,
+                                    strong: ({ children }) => <strong className="font-bold text-white bg-white/10 px-1.5 py-0.5 rounded text-[12px] sm:text-[13px] border border-white/10">{children}</strong>,
+                                    em: ({ children }) => <em className="text-[var(--text-secondary)] italic">{children}</em>,
+                                    hr: () => <div className="my-3.5 h-[1px] w-full bg-[var(--border-strong)]" />,
+                                    p: ({ children }) => <p className="mb-3 text-xs sm:text-sm text-[var(--text-secondary)] leading-relaxed last:mb-0 inline-block w-full">{children}</p>,
+                                    ul: ({ children }) => <ul className="my-2 space-y-1.5 list-none pl-0">{children}</ul>,
+                                    ol: ({ children }) => <ol className="my-2 space-y-1.5 list-decimal pl-4">{children}</ol>,
+                                    li: ({ children }) => <li className="text-[var(--text-secondary)] text-xs sm:text-sm my-1 leading-relaxed relative">{children}</li>,
+                                    a: ({ href, children }) => <a href={href} className="text-[var(--accent)] underline hover:text-[var(--accent-strong)]" target="_blank" rel="noopener noreferrer">{children}</a>
+                                }}
                         >
                             {message.text}
                         </ReactMarkdown>

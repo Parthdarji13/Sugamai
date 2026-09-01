@@ -4,11 +4,11 @@ import React from 'react';
 import AnimatedPage from '@/components/AnimatedPage';
 import MessageBubble from '@/components/MessageBubble';
 import TypingIndicator from '@/components/TypingIndicator';
-import { Message } from '@/types/chat';
+import { Message, UIText } from '@/types/chat';
 
 interface ChatSectionProps {
   messages: Message[];
-  text: any;
+  text: UIText;
   isLoading: boolean;
   input: string;
   setInput: (val: string) => void;
