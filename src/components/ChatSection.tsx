@@ -17,6 +17,7 @@ interface ChatSectionProps {
   setLastMatchedSourceId: (id: string | null) => void;
   messagesEndRef: React.RefObject<HTMLDivElement | null>;
   inputRef: React.RefObject<HTMLTextAreaElement | null>;
+  onNewChat?: () => void;
 }
 
 export default function ChatSection({
@@ -30,6 +31,7 @@ export default function ChatSection({
   setLastMatchedSourceId,
   messagesEndRef,
   inputRef,
+  onNewChat,
 }: ChatSectionProps) {
   const showTypingIndicator =
     isLoading && (messages.length === 0 || messages[messages.length - 1].sender !== 'assistant');
@@ -39,8 +41,12 @@ export default function ChatSection({
       <div className="mb-4 flex justify-between items-center">
         <button
           onClick={() => {
-            setMessages([]);
-            setLastMatchedSourceId(null);
+            if (onNewChat) {
+              onNewChat();
+            } else {
+              setMessages([]);
+              setLastMatchedSourceId(null);
+            }
           }}
           className="inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-semibold text-[var(--text-secondary)] transition-colors hover:text-white hover:border-[rgba(255,255,255,0.2)]"
           style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}

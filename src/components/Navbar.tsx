@@ -22,6 +22,7 @@ interface NavbarProps {
   user?: { id: string; name: string; email: string; language: string } | null;
   onOpenAuthModal?: () => void;
   onLogout?: () => void;
+  onToggleHistory?: () => void;
 }
 
 export default function Navbar({
@@ -36,6 +37,7 @@ export default function Navbar({
   user,
   onOpenAuthModal,
   onLogout,
+  onToggleHistory,
 }: NavbarProps) {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
@@ -67,11 +69,21 @@ export default function Navbar({
             { key: 'updates', id: 'updates-anchor', label: navText.updates },
             { key: 'services', id: 'chatbot-anchor', label: navText.services },
             { key: 'transparency', id: 'footer-anchor', label: navText.transparency },
-            { key: 'history', id: 'footer-anchor', label: navText.history },
+            { key: 'history', id: 'history', label: navText.history },
           ].map((item) => (
             <button
               key={item.key}
-              onClick={() => scrollToSection(item.id, item.key)}
+              onClick={() => {
+                if (item.key === 'history') {
+                  if (user) {
+                    onToggleHistory?.();
+                  } else {
+                    onOpenAuthModal?.();
+                  }
+                } else {
+                  scrollToSection(item.id, item.key);
+                }
+              }}
               className={`nav-link ${activeNav === item.key ? 'active' : ''}`}
               style={{ color: activeNav === item.key ? 'var(--accent)' : 'var(--text-secondary)' }}
             >
@@ -82,6 +94,21 @@ export default function Navbar({
 
         {/* Right icons */}
         <div className="flex items-center gap-3">
+          {/* History quick icon for authenticated user */}
+          {user && (
+            <button
+              aria-label={navText.history}
+              className="btn-press flex h-8 w-8 items-center justify-center rounded-full border transition-all hover:border-[rgba(59,130,246,0.4)] hover:text-[var(--accent)]"
+              style={{ borderColor: 'var(--border)', color: 'var(--text-secondary)' }}
+              onClick={onToggleHistory}
+              title={navText.history}
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </button>
+          )}
+
           {/* Language selector */}
           <button
             aria-label="Switch Language"
@@ -162,12 +189,26 @@ export default function Navbar({
                       <p className="text-xs font-bold text-white truncate">{user.name}</p>
                       <p className="text-[10px] text-[var(--text-muted)] truncate">{user.email}</p>
                     </div>
+
+                    <button
+                      onClick={() => {
+                        setUserMenuOpen(false);
+                        onToggleHistory?.();
+                      }}
+                      className="mt-1 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-medium text-[var(--text-secondary)] hover:bg-white/5 hover:text-white transition-colors"
+                    >
+                      <svg className="h-3.5 w-3.5 text-[var(--accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      {navText.history}
+                    </button>
+
                     <button
                       onClick={() => {
                         setUserMenuOpen(false);
                         onLogout?.();
                       }}
-                      className="mt-1 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-medium text-red-400 hover:bg-red-500/10 transition-colors"
+                      className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-medium text-red-400 hover:bg-red-500/10 transition-colors"
                     >
                       <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l3 3m0 0l-3 3m3-3H3" />
@@ -225,7 +266,14 @@ export default function Navbar({
             {navText.transparency}
           </button>
           <button
-            onClick={() => scrollToSection('footer-anchor', 'history')}
+            onClick={() => {
+              setMobileMenuOpen(false);
+              if (user) {
+                onToggleHistory?.();
+              } else {
+                onOpenAuthModal?.();
+              }
+            }}
             className="border-b py-2.5 text-left hover:text-[var(--accent)]"
             style={{ borderColor: 'var(--border)' }}
           >

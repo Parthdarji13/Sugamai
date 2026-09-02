@@ -6,6 +6,7 @@ import HeroSection from '@/components/HeroSection';
 import ChatSection from '@/components/ChatSection';
 import Footer from '@/components/Footer';
 import AuthModal from '@/components/AuthModal';
+import ConversationHistory from '@/components/ConversationHistory';
 import { Message, Language } from '@/types/chat';
 
 /* ═══════════════════════════════════════════
@@ -158,6 +159,8 @@ export default function Home() {
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [user, setUser] = useState<{ id: string; name: string; email: string; language: string } | null>(null);
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [historyRefreshKey, setHistoryRefreshKey] = useState(0);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [lastMatchedSourceId, setLastMatchedSourceId] = useState<string | null>(null);
@@ -193,6 +196,75 @@ export default function Home() {
       /* ignore network errors during logout */
     } finally {
       setUser(null);
+      setHistoryOpen(false);
+      setConversationId(null);
+    }
+  };
+
+  const handleNewChat = () => {
+    setMessages([]);
+    setConversationId(null);
+    setLastMatchedSourceId(null);
+    setInput('');
+    setHistoryOpen(false);
+  };
+
+  const handleConversationDeleted = (deletedId: string) => {
+    if (conversationId === deletedId) {
+      setMessages([]);
+      setConversationId(null);
+      setLastMatchedSourceId(null);
+      setInput('');
+    }
+  };
+
+  const handleSelectConversation = async (convId: string) => {
+    try {
+      setIsLoading(true);
+      const res = await fetch(`/api/conversations/${convId}`);
+      if (res.status === 401) {
+        setUser(null);
+        setHistoryOpen(false);
+        return;
+      }
+      if (!res.ok) {
+        throw new Error('Failed to load conversation');
+      }
+      const data = await res.json();
+      if (data?.conversation && Array.isArray(data?.messages)) {
+        const loadedMessages: Message[] = data.messages.map((m: {
+          id: string;
+          sender: 'user' | 'assistant';
+          text: string;
+          sourceName?: string;
+          sourceUrl?: string;
+          retrievalMethod?: 'live_fetch' | 'live_fetch_with_cached_context' | 'cached_official_fallback' | 'unmatched_default';
+          isSupported?: boolean;
+          serviceId?: string;
+        }) => ({
+          id: m.id,
+          sender: m.sender,
+          text: m.text,
+          sourceName: m.sourceName,
+          sourceUrl: m.sourceUrl,
+          retrievalMethod: m.retrievalMethod,
+          isSupported: m.isSupported,
+        }));
+
+        setConversationId(data.conversation.id);
+        setMessages(loadedMessages);
+
+        const lastAssistant = [...data.messages].reverse().find((m: { sender: string; serviceId?: string }) => m.sender === 'assistant');
+        if (lastAssistant?.serviceId) {
+          setLastMatchedSourceId(lastAssistant.serviceId);
+        } else {
+          setLastMatchedSourceId(null);
+        }
+      }
+    } catch (err) {
+      console.error('Error loading conversation:', err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -254,7 +326,7 @@ export default function Home() {
     try {
       resetTimeout();
 
-      const targetConvId = messages.length === 0 ? undefined : (conversationId || undefined);
+      const targetConvId = conversationId || undefined;
 
       const response = await fetch('/api/chat', {
         method: 'POST',
@@ -377,6 +449,9 @@ export default function Home() {
         }
       }
       setIsLoading(false);
+      if (user) {
+        setHistoryRefreshKey((prev) => prev + 1);
+      }
       setTimeout(() => inputRef.current?.focus(), 50);
     }
   };
@@ -398,6 +473,7 @@ export default function Home() {
         user={user}
         onOpenAuthModal={() => setAuthModalOpen(true)}
         onLogout={handleLogout}
+        onToggleHistory={() => setHistoryOpen(!historyOpen)}
       />
 
       <main className="w-full flex-1">
@@ -424,11 +500,24 @@ export default function Home() {
             setLastMatchedSourceId={setLastMatchedSourceId}
             messagesEndRef={messagesEndRef}
             inputRef={inputRef}
+            onNewChat={handleNewChat}
           />
         )}
       </main>
 
       <Footer title={text.title} />
+
+      <ConversationHistory
+        isOpen={historyOpen}
+        onClose={() => setHistoryOpen(false)}
+        user={user}
+        activeConversationId={conversationId}
+        onSelectConversation={handleSelectConversation}
+        onNewChat={handleNewChat}
+        onConversationDeleted={handleConversationDeleted}
+        language={language}
+        refreshTrigger={historyRefreshKey}
+      />
 
       <AuthModal
         isOpen={authModalOpen}
