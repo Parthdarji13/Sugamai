@@ -2,6 +2,9 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { retrieveHybridOfficialInfo } from '@/retrieval/hybrid';
 import { isQuotaExceededError, isAuthConfigError, isTimeoutError, isTemporaryModelError, classifyModelError } from '@/utils/gemini';
 import type { Message } from '@/types/chat';
+import { ObjectId } from 'mongodb';
+import { getSessionUser } from '@/lib/auth';
+import { getConversationsCollection, getChatMessagesCollection, ConversationDocument, ChatMessageDocument } from '@/lib/dbCollections';
 
 export async function POST(req: Request) {
   // Start Total Request timer
@@ -10,7 +13,7 @@ export async function POST(req: Request) {
   const TOTAL_BUDGET_MS = 25000;
 
   try {
-    const { message, language, lastMatchedSourceId, history } = await req.json();
+    const { message, language, lastMatchedSourceId, history, conversationId } = await req.json();
 
     if (!message || message.trim() === '') {
       console.timeEnd('total-request');
@@ -18,6 +21,64 @@ export async function POST(req: Request) {
         status: 400,
         headers: { 'Content-Type': 'application/json' }
       });
+    }
+
+    // Authenticated Session Resolution (Guest if null)
+    const sessionUser = await getSessionUser();
+    let targetConversationId: ObjectId | null = null;
+    let conversationsCollection: Awaited<ReturnType<typeof getConversationsCollection>> | null = null;
+    let chatMessagesCollection: Awaited<ReturnType<typeof getChatMessagesCollection>> | null = null;
+
+    if (sessionUser) {
+      conversationsCollection = await getConversationsCollection();
+      chatMessagesCollection = await getChatMessagesCollection();
+      const userObjectId = new ObjectId(sessionUser.id);
+
+      if (conversationId) {
+        if (!ObjectId.isValid(conversationId)) {
+          console.timeEnd('total-request');
+          return new Response(JSON.stringify({ error: 'Invalid conversationId format' }), {
+            status: 400,
+            headers: { 'Content-Type': 'application/json' }
+          });
+        }
+        const convObjectId = new ObjectId(conversationId);
+        const existingConv = await conversationsCollection.findOne({
+          _id: convObjectId,
+          userId: userObjectId,
+        });
+        if (!existingConv) {
+          console.timeEnd('total-request');
+          return new Response(JSON.stringify({ error: 'Conversation not found or access denied' }), {
+            status: 404,
+            headers: { 'Content-Type': 'application/json' }
+          });
+        }
+        targetConversationId = convObjectId;
+      } else {
+        const titleSnippet = message.trim().replace(/\s+/g, ' ').slice(0, 50);
+        const now = new Date();
+        const newConv = await conversationsCollection.insertOne({
+          userId: userObjectId,
+          title: titleSnippet || 'New conversation',
+          createdAt: now,
+          updatedAt: now,
+        } as ConversationDocument);
+        targetConversationId = newConv.insertedId;
+      }
+
+      // Persist user query to database
+      await chatMessagesCollection.insertOne({
+        conversationId: targetConversationId,
+        sender: 'user',
+        text: message.trim(),
+        createdAt: new Date(),
+      } as ChatMessageDocument);
+
+      await conversationsCollection.updateOne(
+        { _id: targetConversationId },
+        { $set: { updatedAt: new Date() } }
+      );
     }
 
     const selectedLanguage = language || 'en'; // 'en', 'hi', 'gu'
@@ -288,16 +349,44 @@ Structure your response using "## Section Title" for major topics (e.g. "## Sche
             isSupported: true,
             serviceId: retrievalResult.serviceId,
             isFreshnessQuery: retrievalResult.isFreshnessQuery,
-            freshDataAvailable: retrievalResult.freshDataAvailable
+            freshDataAvailable: retrievalResult.freshDataAvailable,
+            conversationId: targetConversationId ? targetConversationId.toHexString() : undefined,
           });
         } else {
           sendJSON({
             type: 'metadata',
             officialSource: 'SugamGov AI System',
             retrievalMethod: 'unmatched_default',
-            isSupported: false
+            isSupported: false,
+            conversationId: targetConversationId ? targetConversationId.toHexString() : undefined,
           });
         }
+
+        // Persistence Helper for Completed Assistant Response
+        const persistAssistantMessage = async (fullText: string) => {
+          if (!targetConversationId || !chatMessagesCollection || !conversationsCollection) return;
+          if (!fullText || fullText.trim() === '') return;
+          try {
+            await chatMessagesCollection.insertOne({
+              conversationId: targetConversationId,
+              sender: 'assistant',
+              text: fullText,
+              sourceName: isSupported ? retrievalResult.sourceTitle : undefined,
+              sourceUrl: isSupported ? retrievalResult.sourceUrl : undefined,
+              retrievalMethod: retrievalResult.retrievalMethod,
+              isSupported: isSupported,
+              serviceId: retrievalResult.serviceId,
+              createdAt: new Date(),
+            } as ChatMessageDocument);
+
+            await conversationsCollection.updateOne(
+              { _id: targetConversationId },
+              { $set: { updatedAt: new Date() } }
+            );
+          } catch (dbErr) {
+            console.error('[DB PERSISTENCE ERROR] Failed to save assistant message:', (dbErr as Error).message);
+          }
+        };
 
         // If Demo Mode
         if (runInDemoMode) {
@@ -307,10 +396,14 @@ Structure your response using "## Section Title" for major topics (e.g. "## Sche
             sendJSON({ type: 'chunk', text: word + ' ' });
             await new Promise(resolve => setTimeout(resolve, 20)); // brief simulated delay
           }
+          await persistAssistantMessage(demoAnswer);
           controller.close();
           console.timeEnd('total-request');
           return;
         }
+
+        let fullAssistantResponse = '';
+        let streamCompletedSuccessfully = false;
 
         // Stream Chunks directly as they arrive from Gemini
         try {
@@ -325,6 +418,7 @@ Structure your response using "## Section Title" for major topics (e.g. "## Sche
           for await (const chunk of result.stream) {
             clearTimeout(silenceTimeout);
             const text = chunk.text();
+            fullAssistantResponse += text;
             sendJSON({ type: 'chunk', text });
 
             silenceTimeout = setTimeout(() => {
@@ -332,6 +426,7 @@ Structure your response using "## Section Title" for major topics (e.g. "## Sche
             }, 20000);
           }
           clearTimeout(silenceTimeout);
+          streamCompletedSuccessfully = true;
         } catch (err) {
           console.error('[STREAM CHUNK ERROR]:', err);
           const errMsg = (err as Error).message;
@@ -342,6 +437,9 @@ Structure your response using "## Section Title" for major topics (e.g. "## Sche
           }
           sendJSON({ type: 'error', message: errorText });
         } finally {
+          if (streamCompletedSuccessfully && fullAssistantResponse.trim()) {
+            await persistAssistantMessage(fullAssistantResponse);
+          }
           controller.close();
           console.timeEnd('total-request');
         }

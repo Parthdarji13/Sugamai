@@ -5,6 +5,7 @@ import Navbar from '@/components/Navbar';
 import HeroSection from '@/components/HeroSection';
 import ChatSection from '@/components/ChatSection';
 import Footer from '@/components/Footer';
+import AuthModal from '@/components/AuthModal';
 import { Message, Language } from '@/types/chat';
 
 /* ═══════════════════════════════════════════
@@ -116,9 +117,9 @@ const UI_TEXT = {
 };
 
 const NAV_TEXT = {
-  en: { services: 'Services', updates: 'Updates', transparency: 'Transparency', history: 'History' },
-  hi: { services: 'सेवाएं', updates: 'अपडेट', transparency: 'पारदर्शिता', history: 'इतिहास' },
-  gu: { services: 'સેવાઓ', updates: 'અપડેટ', transparency: 'પારદર્શિતા', history: 'ઇતિહાસ' },
+  en: { services: 'Services', updates: 'Updates', transparency: 'Transparency', history: 'History', signIn: 'Sign In', signOut: 'Sign Out' },
+  hi: { services: 'सेवाएं', updates: 'अपडेट', transparency: 'पारदर्शिता', history: 'इतिहास', signIn: 'साइन इन', signOut: 'साइन आउट' },
+  gu: { services: 'સેવાઓ', updates: 'અપડેટ', transparency: 'પારદર્શિતા', history: 'ઇતિહાસ', signIn: 'સાઇન ઇન', signOut: 'સાઇન આઉટ' },
 };
 
 /* ═══════════════════════════════════════════
@@ -154,11 +155,46 @@ const FEATURE_STATS = [
 export default function Home() {
   const [language, setLanguage] = useState<Language>('en');
   const [messages, setMessages] = useState<Message[]>([]);
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [user, setUser] = useState<{ id: string; name: string; email: string; language: string } | null>(null);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [lastMatchedSourceId, setLastMatchedSourceId] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeNav, setActiveNav] = useState('services');
+
+  // Check existing session on initial load
+  useEffect(() => {
+    let isMounted = true;
+    async function checkSession() {
+      try {
+        const res = await fetch('/api/auth/me');
+        if (res.ok) {
+          const data = await res.json();
+          if (isMounted && data?.user) {
+            setUser(data.user);
+          }
+        }
+      } catch {
+        // Guest mode or network error
+      }
+    }
+    checkSession();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } catch {
+      /* ignore network errors during logout */
+    } finally {
+      setUser(null);
+    }
+  };
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -218,10 +254,18 @@ export default function Home() {
     try {
       resetTimeout();
 
+      const targetConvId = messages.length === 0 ? undefined : (conversationId || undefined);
+
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: textToSend, language, lastMatchedSourceId, history: messages }),
+        body: JSON.stringify({
+          message: textToSend,
+          language,
+          lastMatchedSourceId,
+          history: messages,
+          conversationId: targetConvId,
+        }),
       });
 
       if (!response.ok) {
@@ -263,6 +307,7 @@ export default function Home() {
             const data = JSON.parse(line);
 
             if (data.type === 'metadata') {
+              if (data.conversationId) setConversationId(data.conversationId);
               setMessages((prev) =>
                 prev.map((m) =>
                   m.id === assistantMsgId
@@ -350,6 +395,9 @@ export default function Home() {
         mobileMenuOpen={mobileMenuOpen}
         setMobileMenuOpen={setMobileMenuOpen}
         navText={nav}
+        user={user}
+        onOpenAuthModal={() => setAuthModalOpen(true)}
+        onLogout={handleLogout}
       />
 
       <main className="w-full flex-1">
@@ -381,6 +429,16 @@ export default function Home() {
       </main>
 
       <Footer title={text.title} />
+
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        onAuthSuccess={(authUser) => {
+          setUser(authUser);
+          setAuthModalOpen(false);
+        }}
+        language={language}
+      />
     </div>
   );
 }
