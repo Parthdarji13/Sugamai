@@ -38,4 +38,5 @@ export interface UIText {
     stat2: string;
     stat3: string;
     backToHome: string;
+    newChat: string;
 }

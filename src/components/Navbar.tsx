@@ -23,6 +23,7 @@ interface NavbarProps {
   onOpenAuthModal?: () => void;
   onLogout?: () => void;
   onToggleHistory?: () => void;
+  onGoHome?: () => void;
 }
 
 export default function Navbar({
@@ -38,6 +39,7 @@ export default function Navbar({
   onOpenAuthModal,
   onLogout,
   onToggleHistory,
+  onGoHome,
 }: NavbarProps) {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
@@ -45,7 +47,11 @@ export default function Navbar({
     <header className="glass sticky top-0 z-40 w-full border-b" style={{ borderColor: 'var(--border)' }}>
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
         {/* Logo */}
-        <div className="flex items-center gap-2.5">
+        <button
+          type="button"
+          onClick={onGoHome}
+          className="flex items-center gap-2.5 text-left transition-opacity hover:opacity-90 focus:outline-none"
+        >
           <div
             className="flex h-8 w-8 items-center justify-center rounded-lg"
             style={{ background: 'var(--accent-soft)', color: 'var(--accent)' }}
@@ -61,7 +67,7 @@ export default function Navbar({
           <h1 className="text-sm font-extrabold tracking-tight" style={{ color: 'var(--accent)' }}>
             {title}
           </h1>
-        </div>
+        </button>
 
         {/* Center Nav */}
         <nav className="hidden items-center gap-8 text-xs font-semibold md:flex">

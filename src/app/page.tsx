@@ -46,6 +46,7 @@ const UI_TEXT = {
     stat2: 'Multilingual',
     stat3: 'AI Verified',
     backToHome: 'Back to Home',
+    newChat: 'New Chat',
   },
   hi: {
     title: 'सुगमगॉव AI',
@@ -80,6 +81,7 @@ const UI_TEXT = {
     stat2: 'बहुभाषी',
     stat3: 'AI सत्यापित',
     backToHome: 'मुख्य पृष्ठ पर वापस',
+    newChat: 'नई बातचीत',
   },
   gu: {
     title: 'સુગમગવ AI',
@@ -114,6 +116,7 @@ const UI_TEXT = {
     stat2: 'બહુભાષી',
     stat3: 'AI ચકાસાયેલ',
     backToHome: 'મુખ્ય પૃષ્ઠ પર પાછા',
+    newChat: 'નવી વાતચીત',
   },
 };
 
@@ -166,6 +169,7 @@ export default function Home() {
   const [lastMatchedSourceId, setLastMatchedSourceId] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeNav, setActiveNav] = useState('services');
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   // Guards language-preference fetches from overwriting a newer manual toggle
   const langChangeSeqRef = useRef(0);
@@ -258,7 +262,15 @@ export default function Home() {
       setLanguage('en'); // Reset to default — never leak User A's language to next user
       setHistoryOpen(false);
       setConversationId(null);
+      setMessages([]);
+      setIsChatOpen(false);
     }
+  };
+
+  const handleBackToHome = () => {
+    setIsChatOpen(false);
+    setHistoryOpen(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleNewChat = () => {
@@ -266,7 +278,9 @@ export default function Home() {
     setConversationId(null);
     setLastMatchedSourceId(null);
     setInput('');
+    setIsChatOpen(true);
     setHistoryOpen(false);
+    setTimeout(() => inputRef.current?.focus(), 50);
   };
 
   const handleConversationDeleted = (deletedId: string) => {
@@ -275,12 +289,14 @@ export default function Home() {
       setConversationId(null);
       setLastMatchedSourceId(null);
       setInput('');
+      setIsChatOpen(true);
     }
   };
 
   const handleSelectConversation = async (convId: string) => {
     try {
       setIsLoading(true);
+      setIsChatOpen(true);
       const res = await fetch(`/api/conversations/${convId}`);
       if (res.status === 401) {
         setUser(null);
@@ -346,7 +362,14 @@ export default function Home() {
   const scrollToSection = (id: string, navKey?: string) => {
     setMobileMenuOpen(false);
     if (navKey) setActiveNav(navKey);
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+    if (isChatOpen) {
+      setIsChatOpen(false);
+      setTimeout(() => {
+        document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+      }, 80);
+    } else {
+      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   /* ═══════════════════════════════════════════
@@ -354,6 +377,8 @@ export default function Home() {
      ═══════════════════════════════════════════ */
   const handleSend = async (textToSend: string) => {
     if (!textToSend.trim() || isLoading) return;
+
+    setIsChatOpen(true);
 
     const userMsg: Message = {
       id: String(++msgIdRef.current),
@@ -534,10 +559,11 @@ export default function Home() {
         onOpenAuthModal={() => setAuthModalOpen(true)}
         onLogout={handleLogout}
         onToggleHistory={() => setHistoryOpen(!historyOpen)}
+        onGoHome={handleBackToHome}
       />
 
-      <main className="w-full flex-1">
-        {messages.length === 0 ? (
+      <main className="w-full flex-1 flex flex-col">
+        {!isChatOpen ? (
           <HeroSection
             text={text}
             input={input}
@@ -556,11 +582,10 @@ export default function Home() {
             input={input}
             setInput={setInput}
             handleSend={handleSend}
-            setMessages={setMessages}
-            setLastMatchedSourceId={setLastMatchedSourceId}
             messagesEndRef={messagesEndRef}
             inputRef={inputRef}
             onNewChat={handleNewChat}
+            onBackToHome={handleBackToHome}
           />
         )}
       </main>
