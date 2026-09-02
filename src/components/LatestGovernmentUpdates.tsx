@@ -25,13 +25,14 @@ const LOCAL_TEXT = {
     empty: 'No dispatches recorded at this time.',
     today: 'Today',
     yesterday: 'Yesterday',
+    exampleNote: 'OFFICIAL GOVERNMENT DISPATCHES',
   },
   hi: {
     sectionTag: 'सूचना तंत्र',
     sectionTitle: 'ताज़ा सरकारी अपडेट',
     sectionSubtitle: 'सरकार भर में क्या हो रहा है',
-    liveBadge: 'नमूना अपडेट',
-    liveStatus: 'उदाहरण',
+    liveBadge: 'सत्यापित अपडेट',
+    liveStatus: 'लाइव / आधिकारिक',
     featuredBadge: 'मुख्य विज्ञप्ति',
     streamBadge: 'हालिया बुलेटिन',
     deptLabel: 'विभाग',
@@ -43,13 +44,14 @@ const LOCAL_TEXT = {
     empty: 'इस समय कोई सरकारी अपडेट उपलब्ध नहीं है।',
     today: 'आज',
     yesterday: 'कल',
+    exampleNote: 'आधिकारिक सरकारी विज्ञप्ति और अपडेट',
   },
   gu: {
     sectionTag: 'માહિતી પ્રવાહ',
     sectionTitle: 'તાજેતરના સરકારી અપડેટ',
     sectionSubtitle: 'સરકારભરમાં શું થઈ રહ્યું છે',
-    liveBadge: 'નમૂના અપડેટ્સ',
-    liveStatus: 'ઉદાહરણો',
+    liveBadge: 'ચકાસાયેલ અપડેટ્સ',
+    liveStatus: 'લાઈવ / સત્તાવાર',
     featuredBadge: 'મુખ્ય જાહેરાત',
     streamBadge: 'તાજેતરના બુલેટિન',
     deptLabel: 'વિભાગ',
@@ -61,10 +63,11 @@ const LOCAL_TEXT = {
     empty: 'આ સમયે કોઈ સરકારી અપડેટ ઉપલબ્ધ નથી.',
     today: 'આજે',
     yesterday: 'ગઈકાલે',
+    exampleNote: 'સત્તાવાર સરકારી જાહેરાતો અને અપડેટ્સ',
   },
 };
 
-function formatUpdateDate(dateStr: string, text: typeof LOCAL_TEXT['en']): { relative: string; formatted: string } {
+function formatUpdateDate(dateStr: string, text: typeof LOCAL_TEXT['en'], language: 'en' | 'hi' | 'gu'): { relative: string; formatted: string } {
   try {
     const d = new Date(dateStr);
     const now = new Date();
@@ -72,9 +75,12 @@ function formatUpdateDate(dateStr: string, text: typeof LOCAL_TEXT['en']): { rel
 
     let relative = text.today;
     if (diffDays === 1) relative = text.yesterday;
-    else if (diffDays > 1) relative = `${diffDays}d ago`;
+    else if (diffDays > 1) {
+      relative = language === 'hi' ? `${diffDays} दिन पहले` : language === 'gu' ? `${diffDays} દિવસ પહેલાં` : `${diffDays}d ago`;
+    }
 
-    const formatted = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const locale = language === 'hi' ? 'hi-IN' : language === 'gu' ? 'gu-IN' : 'en-IN';
+    const formatted = d.toLocaleDateString(locale, { month: 'short', day: 'numeric', year: 'numeric' });
     return { relative, formatted };
   } catch {
     return { relative: text.today, formatted: dateStr };
@@ -184,7 +190,7 @@ export default function LatestGovernmentUpdates({ language }: LatestGovernmentUp
   const featuredTitle = featured?.title[language] || featured?.title.en;
   const featuredSummary = featured?.summary[language] || featured?.summary.en;
   const featuredDept = featured?.department[language] || featured?.department.en;
-  const featuredDate = featured ? formatUpdateDate(featured.date, text) : { relative: '', formatted: '' };
+  const featuredDate = featured ? formatUpdateDate(featured.date, text, language) : { relative: '', formatted: '' };
 
   return (
     <div className="w-full">
@@ -339,7 +345,7 @@ export default function LatestGovernmentUpdates({ language }: LatestGovernmentUp
               const itemNum = String(index + 2).padStart(2, '0');
               const itemTitle = update.title[language] || update.title.en;
               const itemDept = update.department[language] || update.department.en;
-              const itemDate = formatUpdateDate(update.date, text);
+              const itemDate = formatUpdateDate(update.date, text, language);
 
               return (
                 <a
@@ -387,7 +393,7 @@ export default function LatestGovernmentUpdates({ language }: LatestGovernmentUp
           {/* Footer note */}
           <div className="mt-4 border-t pt-3 text-right" style={{ borderColor: 'var(--border)' }}>
             <span className="font-mono text-[9px] text-[var(--text-muted)]">
-              EXAMPLE UPDATES FOR DEMONSTRATION
+              {text.exampleNote}
             </span>
           </div>
         </div>

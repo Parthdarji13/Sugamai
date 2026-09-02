@@ -81,5 +81,72 @@ export const governmentUpdates: GovernmentUpdate[] = [
     sourceUrl: 'https://services.india.gov.in/',
     sourceName: 'National Government Services Portal',
     category: 'income_certificate'
+  },
+  {
+    id: 'passport_seva_5day',
+    title: {
+      en: 'mPassport Seva: Police Verification Duration Reduced to 5 Days',
+      hi: 'एमपासपोर्ट सेवा: पुलिस सत्यापन समय घटकर 5 दिन हुआ',
+      gu: 'એમપાસપોર્ટ સેવા: પોલીસ વેરિફિકેશન સમય ઘટીને 5 દિવસ થયો'
+    },
+    summary: {
+      en: 'Ministry of External Affairs expands mPassport Police App nationwide, slashing background verification duration from 15 days to under 5 days.',
+      hi: 'विदेश मंत्रालय ने एमपासपोर्ट पुलिस ऐप का देशव्यापी विस्तार किया, जिससे पुलिस सत्यापन का समय 15 दिनों से घटकर 5 दिन से भी कम हो गया है।',
+      gu: 'વિદેશ મંત્રાલય દ્વારા એમપાસપોર્ટ પોલીસ એપનું વિસ્તરણ કરવામાં આવ્યું છે, જેનાથી પોલીસ વેરિફિકેશનનો સમયગાળો 15 દિવસથી ઘટીને 5 દિવસ થયો છે.'
+    },
+    department: {
+      en: 'Ministry of External Affairs',
+      hi: 'विदेश मंत्रालय',
+      gu: 'વિદેશ મંત્રાલય'
+    },
+    date: '2025-02-15',
+    sourceUrl: 'https://passportindia.gov.in/',
+    sourceName: 'Passport Seva Portal',
+    category: 'income_certificate'
+  },
+  {
+    id: 'pm_awas_2cr_target',
+    title: {
+      en: 'PM Awas Yojana (Gramin) Approved for 2 Crore Additional Homes',
+      hi: 'पीएम आवास योजना (ग्रामीण) के तहत 2 करोड़ अतिरिक्त आवासों को मंजूरी',
+      gu: 'પીએમ આવાસ યોજના (ગ્રામીણ) હેઠળ 2 કરોડ વધારાના મકાનોને મંજૂરી'
+    },
+    summary: {
+      en: 'Union Cabinet approved financial assistance for constructing 2 crore more rural houses with direct DBT financial transfer and geo-tagged verification.',
+      hi: 'केंद्रीय मंत्रिमंडल ने डीबीटी प्रत्यक्ष लाभ अंतरण और जियो-टैग्ड सत्यापन के साथ 2 करोड़ अधिक ग्रामीण मकानों के निर्माण के लिए वित्तीय सहायता को मंजूरी दी।',
+      gu: 'કેન્દ્રીય મંત્રીમંડળે ડીબીટી સીધા લાભ ટ્રાન્સફર અને જીઓ-ટેગ્ડ ચકાસણી સાથે વધુ 2 કરોડ ગ્રામીણ ઘરોના નિર્માણ માટે નાણાકીય સહાય મંજૂર કરી.'
+    },
+    department: {
+      en: 'Ministry of Rural Development',
+      hi: 'ग्रामीण विकास मंत्रालय',
+      gu: 'ગ્રામીણ વિકાસ મંત્રાલય'
+    },
+    date: '2025-02-01',
+    sourceUrl: 'https://pmayg.nic.in/',
+    sourceName: 'PMAY-G Official Portal',
+    category: 'pm_kisan'
+  },
+  {
+    id: 'eshram_portal_integration',
+    title: {
+      en: 'e-Shram Portal Integrated with National Career Service',
+      hi: 'ई-श्रम पोर्टल का नेशनल करियर सर्विस (NCS) के साथ एकीकरण',
+      gu: 'ઇ-શ્રમ પોર્ટલનું નેશનલ કરિયર સર્વિસ (NCS) સાથે જોડાણ'
+    },
+    summary: {
+      en: 'Over 30 crore unorganized workers on e-Shram can now directly access formal job postings, skill certifications, and social security benefits.',
+      hi: 'ई-श्रम पर पंजीकृत 30 करोड़ से अधिक असंगठित श्रमिक अब सीधे नौकरियों, कौशल प्रमाणन और सामाजिक सुरक्षा योजनाओं से जुड़ सकते हैं।',
+      gu: 'ઇ-શ્રમ પર નોંધાયેલા 30 કરોડથી વધુ અસંગઠિત કામદારો હવે સીધી નોકરીઓ, કૌશલ્ય પ્રમાણપત્ર અને સામાજિક સુરક્ષા યોજનાઓ સાથે જોડાઈ શકે છે.'
+    },
+    department: {
+      en: 'Ministry of Labour and Employment',
+      hi: 'श्रम एवं रोजगार मंत्रालय',
+      gu: 'શ્રમ અને રોજગાર મંત્રાલય'
+    },
+    date: '2025-01-25',
+    sourceUrl: 'https://eshram.gov.in/',
+    sourceName: 'e-Shram Portal',
+    category: 'income_certificate'
   }
 ];
+

@@ -1,3 +1,4 @@
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { GovernmentUpdate } from './updatesData';
 
 interface ParsedRssItem {
@@ -5,6 +6,67 @@ interface ParsedRssItem {
   link: string;
   pubDate?: string;
   prid?: string;
+}
+
+/**
+ * In-memory cache for live government updates (15-minute TTL).
+ */
+let cachedLiveUpdates: { data: GovernmentUpdate[]; timestamp: number } | null = null;
+const LIVE_CACHE_TTL_MS = 15 * 60 * 1000;
+
+/**
+ * Translates an array of English headlines into natural, professional Hindi and Gujarati using Gemini.
+ * Returns null if translation fails, times out, or quota is exceeded.
+ */
+async function translateHeadlinesWithGemini(
+  titles: string[]
+): Promise<Array<{ hi: string; gu: string }> | null> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey || apiKey.trim() === '' || apiKey === 'your_key_here') {
+    return null;
+  }
+
+  const CASCADE_MODELS = ['gemini-3.5-flash-lite', 'gemini-3.5-flash', 'gemini-3.6-flash'];
+  const genAI = new GoogleGenerativeAI(apiKey.trim());
+
+  for (const modelName of CASCADE_MODELS) {
+    try {
+      const model = genAI.getGenerativeModel({ model: modelName });
+      const prompt = `Translate the following ${titles.length} official Indian government news release titles into natural, professional Hindi (देवनागरी) and Gujarati (ગુજરાતી).
+Return ONLY a valid JSON array of objects with keys "hi" and "gu", strictly matching the exact order of the input titles.
+Do NOT include markdown formatting, backticks, or explanatory text. Just the raw JSON array.
+Titles to translate:
+${JSON.stringify(titles)}`;
+
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error(`Translation timeout after 6000ms for ${modelName}`)), 6000)
+      );
+
+      const res = await Promise.race([
+        model.generateContent(prompt),
+        timeoutPromise
+      ]);
+
+      const rawText = res.response.text();
+      const cleaned = rawText
+        .replace(/^```json\s*/i, '')
+        .replace(/^```\s*/i, '')
+        .replace(/\s*```$/i, '')
+        .trim();
+
+      const parsed = JSON.parse(cleaned);
+      if (Array.isArray(parsed) && parsed.length >= titles.length) {
+        return parsed.map((item: { hi?: string; gu?: string }) => ({
+          hi: (typeof item.hi === 'string' && item.hi.trim().length > 0) ? item.hi.trim() : '',
+          gu: (typeof item.gu === 'string' && item.gu.trim().length > 0) ? item.gu.trim() : ''
+        }));
+      }
+    } catch (err) {
+      console.warn(`[UPDATES TRANSLATE] Model ${modelName} translation error:`, (err as Error).message);
+    }
+  }
+
+  return null;
 }
 
 /**
@@ -226,9 +288,15 @@ function formatPublicationDate(pubDateStr?: string): string {
  * Returns an array of GovernmentUpdate objects, or null if live fetch fails or has <3 valid items.
  */
 export async function fetchLiveGovernmentUpdates(): Promise<GovernmentUpdate[] | null> {
+  // 1. Check in-memory cache first
+  if (cachedLiveUpdates && Date.now() - cachedLiveUpdates.timestamp < LIVE_CACHE_TTL_MS) {
+    console.log('[UPDATES FETCH] Serving from in-memory cache');
+    return cachedLiveUpdates.data;
+  }
+
   console.log('[UPDATES FETCH] Attempting PIB live feed');
 
-  // Fetch English (lang=1) and Hindi (lang=2) feeds in parallel
+  // 2. Fetch English (lang=1) and Hindi (lang=2) feeds in parallel
   const [enResult, hiResult] = await Promise.allSettled([
     fetchPibRssFeed(1, 5000),
     fetchPibRssFeed(2, 5000)
@@ -242,15 +310,37 @@ export async function fetchLiveGovernmentUpdates(): Promise<GovernmentUpdate[] |
     return null;
   }
 
-  // Map Hindi items by PRID for strict matching
+  // Map Hindi items by PRID
   const hiByPrid = new Map<string, string>();
   hiItems.forEach(item => {
     if (item.prid) hiByPrid.set(item.prid, item.title);
   });
 
-  const updates: GovernmentUpdate[] = enItems.slice(0, 6).map((enItem, idx) => {
-    // Determine Hindi title match by exact PRID or fallback to English title (prevent cross-story mismatch)
-    const hiTitle = (enItem.prid && hiByPrid.get(enItem.prid)) || enItem.title;
+  const selectedEnItems = enItems.slice(0, 6);
+  const englishTitles = selectedEnItems.map(item => item.title);
+
+  // 3. Attempt translation into natural Hindi and Gujarati using Gemini
+  const translations = await translateHeadlinesWithGemini(englishTitles);
+
+  const updates: GovernmentUpdate[] = selectedEnItems.map((enItem, idx) => {
+    const translation = translations?.[idx];
+
+    // Priority for Hindi:
+    // 1. High-quality Gemini translation
+    // 2. Exact PRID match from PIB Hindi feed
+    // 3. Corresponding position title from PIB Hindi feed (if available)
+    // 4. English title fallback
+    const hiTitle = (translation?.hi && translation.hi.length > 0)
+      ? translation.hi
+      : ((enItem.prid && hiByPrid.get(enItem.prid)) || hiItems[idx]?.title || enItem.title);
+
+    // Priority for Gujarati:
+    // 1. High-quality Gemini translation
+    // 2. Hindi or English title fallback
+    const guTitle = (translation?.gu && translation.gu.length > 0)
+      ? translation.gu
+      : (hiTitle !== enItem.title ? hiTitle : enItem.title);
+
     const formattedDate = formatPublicationDate(enItem.pubDate);
     const category = inferCategory(enItem.title);
     const department = inferDepartment(enItem.title);
@@ -260,12 +350,12 @@ export async function fetchLiveGovernmentUpdates(): Promise<GovernmentUpdate[] |
       title: {
         en: enItem.title,
         hi: hiTitle,
-        gu: enItem.title // Fallback for Gujarati as supported by UI
+        gu: guTitle
       },
       summary: {
         en: `Official government release: ${enItem.title}. Access official details via the source link below.`,
         hi: `आधिकारिक सरकारी विज्ञप्ति: ${hiTitle}। नीचे दिए गए स्रोत लिंक के माध्यम से आधिकारिक विवरण प्राप्त करें।`,
-        gu: `સત્તાવાર સરકારી જાહેરાત: ${enItem.title}. નીચે આપેલ લિંક દ્વારા સત્તાવાર વિગતો મેળવો.`
+        gu: `સત્તાવાર સરકારી જાહેરાત: ${guTitle}। નીચે આપેલ લિંક દ્વારા સત્તાવાર વિગતો મેળવો.`
       },
       department,
       date: formattedDate,
@@ -275,6 +365,13 @@ export async function fetchLiveGovernmentUpdates(): Promise<GovernmentUpdate[] |
     };
   });
 
-  console.log(`[UPDATES FETCH] Live PIB feed succeeded - ${updates.length} official updates retrieved.`);
+  // 4. Store in in-memory cache for 15 minutes
+  cachedLiveUpdates = {
+    data: updates,
+    timestamp: Date.now()
+  };
+
+  console.log(`[UPDATES FETCH] Live PIB feed succeeded - ${updates.length} official multilingual updates retrieved.`);
   return updates;
 }
+
