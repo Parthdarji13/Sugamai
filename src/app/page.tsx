@@ -167,6 +167,32 @@ export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeNav, setActiveNav] = useState('services');
 
+  // Guards language-preference fetches from overwriting a newer manual toggle
+  const langChangeSeqRef = useRef(0);
+
+  /* ═══════════════════════════════════════════
+     PREFERENCE LOADING HELPER
+     Fetches saved language from /api/preferences.
+     seq guards against stale responses overwriting a newer manual toggle.
+     ═══════════════════════════════════════════ */
+  const loadUserPreferences = async (seq: number) => {
+    try {
+      const res = await fetch('/api/preferences');
+      if (!res.ok) return; // 401 for guest, ignore gracefully
+      const data = await res.json();
+      const savedLang = data?.language;
+      if (
+        savedLang &&
+        ['en', 'hi', 'gu'].includes(savedLang) &&
+        seq === langChangeSeqRef.current // Only apply if no newer manual change
+      ) {
+        setLanguage(savedLang as Language);
+      }
+    } catch {
+      // Network error — keep current language, never crash
+    }
+  };
+
   // Check existing session on initial load
   useEffect(() => {
     let isMounted = true;
@@ -177,6 +203,9 @@ export default function Home() {
           const data = await res.json();
           if (isMounted && data?.user) {
             setUser(data.user);
+            // Load saved preference — capture current seq so a manual toggle wins
+            const seq = langChangeSeqRef.current;
+            await loadUserPreferences(seq);
           }
         }
       } catch {
@@ -189,6 +218,36 @@ export default function Home() {
     };
   }, []);
 
+  /* ═══════════════════════════════════════════
+     LANGUAGE CHANGE HANDLER
+     - Updates UI immediately (optimistic)
+     - For authenticated users: persists to /api/preferences
+     - For guests: in-memory only
+     - Never blocks the UI on network
+     ═══════════════════════════════════════════ */
+  const handleLanguageChange = (newLang: Language) => {
+    // Increment sequence so any in-flight preference fetch won't overwrite this
+    langChangeSeqRef.current += 1;
+    setLanguage(newLang);
+
+    if (!user) return; // Guest — in-memory only, no API call
+
+    // Persist asynchronously — fire and forget with graceful error handling
+    (async () => {
+      try {
+        await fetch('/api/preferences', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ language: newLang }),
+        });
+        // Update the user object's language field to keep it in sync
+        setUser((prev) => (prev ? { ...prev, language: newLang } : prev));
+      } catch {
+        // Network error — UI already updated optimistically, no crash, no revert
+      }
+    })();
+  };
+
   const handleLogout = async () => {
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
@@ -196,6 +255,7 @@ export default function Home() {
       /* ignore network errors during logout */
     } finally {
       setUser(null);
+      setLanguage('en'); // Reset to default — never leak User A's language to next user
       setHistoryOpen(false);
       setConversationId(null);
     }
@@ -464,7 +524,7 @@ export default function Home() {
       <Navbar
         title={text.title}
         language={language}
-        setLanguage={setLanguage}
+        setLanguage={handleLanguageChange}
         activeNav={activeNav}
         scrollToSection={scrollToSection}
         mobileMenuOpen={mobileMenuOpen}
@@ -525,6 +585,9 @@ export default function Home() {
         onAuthSuccess={(authUser) => {
           setUser(authUser);
           setAuthModalOpen(false);
+          // Load the user's saved language preference after successful login
+          const seq = langChangeSeqRef.current;
+          loadUserPreferences(seq);
         }}
         language={language}
       />
