@@ -12,8 +12,8 @@ const LOCAL_TEXT = {
     sectionTag: 'INTELLIGENCE FEED',
     sectionTitle: 'Latest Government Updates',
     sectionSubtitle: "What's happening across Government",
-    liveBadge: 'SAMPLE UPDATES',
-    liveStatus: 'Examples',
+    liveBadge: 'OFFICIAL FEED',
+    liveStatus: 'PIB • Govt of India',
     featuredBadge: 'FEATURED DISPATCH',
     streamBadge: 'RECENT BULLETINS',
     deptLabel: 'Department',
@@ -31,8 +31,8 @@ const LOCAL_TEXT = {
     sectionTag: 'सूचना तंत्र',
     sectionTitle: 'ताज़ा सरकारी अपडेट',
     sectionSubtitle: 'सरकार भर में क्या हो रहा है',
-    liveBadge: 'सत्यापित अपडेट',
-    liveStatus: 'लाइव / आधिकारिक',
+    liveBadge: 'सत्यापित विज्ञप्ति',
+    liveStatus: 'पीआईबी • भारत सरकार',
     featuredBadge: 'मुख्य विज्ञप्ति',
     streamBadge: 'हालिया बुलेटिन',
     deptLabel: 'विभाग',
@@ -50,8 +50,8 @@ const LOCAL_TEXT = {
     sectionTag: 'માહિતી પ્રવાહ',
     sectionTitle: 'તાજેતરના સરકારી અપડેટ',
     sectionSubtitle: 'સરકારભરમાં શું થઈ રહ્યું છે',
-    liveBadge: 'ચકાસાયેલ અપડેટ્સ',
-    liveStatus: 'લાઈવ / સત્તાવાર',
+    liveBadge: 'સત્તાવાર જાહેરાત',
+    liveStatus: 'પીઆઈબી • ભારત સરકાર',
     featuredBadge: 'મુખ્ય જાહેરાત',
     streamBadge: 'તાજેતરના બુલેટિન',
     deptLabel: 'વિભાગ',
@@ -220,16 +220,23 @@ export default function LatestGovernmentUpdates({ language }: LatestGovernmentUp
         {/* Live Feed Status Badge */}
         <div
           className="flex items-center gap-3 self-start rounded-full border px-4 py-1.5 sm:self-auto"
-          style={{ borderColor: 'var(--border-strong)', background: 'var(--surface)' }}
+          style={{ borderColor: 'rgba(59, 130, 246, 0.3)', background: 'var(--surface)' }}
         >
           <span className="relative flex h-2 w-2">
-            <span className="relative inline-flex h-2 w-2 rounded-full" style={{ background: 'var(--text-muted)' }} />
+            <span
+              className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-75"
+              style={{ background: 'var(--accent)' }}
+            />
+            <span
+              className="relative inline-flex h-2 w-2 rounded-full"
+              style={{ background: 'var(--accent)' }}
+            />
           </span>
           <div className="flex flex-col text-left">
             <span className="font-mono text-[10px] font-bold tracking-wider text-white">
               {text.liveBadge}
             </span>
-            <span className="text-[9px] font-medium text-[var(--text-muted)]">
+            <span className="text-[9px] font-medium" style={{ color: 'var(--accent)' }}>
               {text.liveStatus}
             </span>
           </div>

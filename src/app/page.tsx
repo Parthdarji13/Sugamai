@@ -121,9 +121,39 @@ const UI_TEXT = {
 };
 
 const NAV_TEXT = {
-  en: { services: 'Services', updates: 'Updates', transparency: 'Transparency', history: 'History', signIn: 'Sign In', signOut: 'Sign Out' },
-  hi: { services: 'सेवाएं', updates: 'अपडेट', transparency: 'पारदर्शिता', history: 'इतिहास', signIn: 'साइन इन', signOut: 'साइन आउट' },
-  gu: { services: 'સેવાઓ', updates: 'અપડેટ', transparency: 'પારદર્શિતા', history: 'ઇતિહાસ', signIn: 'સાઇન ઇન', signOut: 'સાઇન આઉટ' },
+  en: {
+    askAI: 'Ask AI',
+    schemes: 'Schemes',
+    updates: 'Live Updates',
+    helplines: 'Helplines',
+    history: 'History',
+    signIn: 'Sign In',
+    signOut: 'Sign Out',
+    services: 'Services',
+    transparency: 'Transparency',
+  },
+  hi: {
+    askAI: 'AI सहायक',
+    schemes: 'योजनाएं',
+    updates: 'ताज़ा अपडेट',
+    helplines: 'हेल्पलाइन',
+    history: 'इतिहास',
+    signIn: 'साइन इन',
+    signOut: 'साइन आउट',
+    services: 'सेवाएं',
+    transparency: 'पारदर्शिता',
+  },
+  gu: {
+    askAI: 'AI સહાયક',
+    schemes: 'યોજનાઓ',
+    updates: 'તાજા અપડેટ',
+    helplines: 'હેલ્પલાઇન',
+    history: 'ઇતિહાસ',
+    signIn: 'સાઇન ઇન',
+    signOut: 'સાઇન આઉટ',
+    services: 'સેવાઓ',
+    transparency: 'પારદર્શિતા',
+  },
 };
 
 /* ═══════════════════════════════════════════
@@ -168,8 +198,45 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [lastMatchedSourceId, setLastMatchedSourceId] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [activeNav, setActiveNav] = useState('services');
+  const [activeNav, setActiveNav] = useState('chat');
   const [isChatOpen, setIsChatOpen] = useState(false);
+
+  // Scroll Spy: Synchronize active navbar button with scroll position
+  useEffect(() => {
+    if (isChatOpen) return;
+
+    const handleScrollSpy = () => {
+      const scrollY = window.scrollY;
+      const windowHeight = window.innerHeight;
+
+      // If viewing top Hero area
+      if (scrollY < 180) {
+        setActiveNav('chat');
+        return;
+      }
+
+      const sections = [
+        { key: 'schemes', el: document.getElementById('schemes-anchor') },
+        { key: 'updates', el: document.getElementById('updates-anchor') },
+        { key: 'helplines', el: document.getElementById('helplines-anchor') },
+      ];
+
+      for (let i = sections.length - 1; i >= 0; i--) {
+        const { key, el } = sections[i];
+        if (el) {
+          const rect = el.getBoundingClientRect();
+          if (rect.top <= windowHeight * 0.4) {
+            setActiveNav(key);
+            return;
+          }
+        }
+      }
+      setActiveNav('chat');
+    };
+
+    window.addEventListener('scroll', handleScrollSpy, { passive: true });
+    return () => window.removeEventListener('scroll', handleScrollSpy);
+  }, [isChatOpen]);
 
   // Guards language-preference fetches from overwriting a newer manual toggle
   const langChangeSeqRef = useRef(0);
@@ -362,6 +429,18 @@ export default function Home() {
   const scrollToSection = (id: string, navKey?: string) => {
     setMobileMenuOpen(false);
     if (navKey) setActiveNav(navKey);
+
+    if (navKey === 'chat') {
+      if (isChatOpen) {
+        // Already in dedicated chat view — focus input
+        inputRef.current?.focus();
+      } else {
+        // Open dedicated chat mode
+        handleNewChat();
+      }
+      return;
+    }
+
     if (isChatOpen) {
       setIsChatOpen(false);
       setTimeout(() => {
@@ -550,7 +629,7 @@ export default function Home() {
         title={text.title}
         language={language}
         setLanguage={handleLanguageChange}
-        activeNav={activeNav}
+        activeNav={isChatOpen ? 'chat' : activeNav}
         scrollToSection={scrollToSection}
         mobileMenuOpen={mobileMenuOpen}
         setMobileMenuOpen={setMobileMenuOpen}
