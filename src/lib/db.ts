@@ -1,4 +1,12 @@
 import { MongoClient, Db } from 'mongodb';
+import dns from 'dns';
+
+// Resolve MongoDB SRV records reliably across Windows and various ISP/hotspot networks
+try {
+  dns.setServers(['8.8.8.8', '8.8.4.4', '1.1.1.1']);
+} catch {
+  // Fallback if setServers is restricted
+}
 
 const DEFAULT_DB_NAME = 'sugamgov';
 
@@ -11,8 +19,9 @@ let clientPromise: Promise<MongoClient> | null = null;
 /**
  * Safely resolves or initializes the MongoClient promise singleton.
  * Uses global cache in development to withstand Next.js Hot Module Replacement (HMR).
+ * Automatically resets and retries if a cached connection attempt failed.
  */
-function getClientPromise(): Promise<MongoClient> {
+async function getClientPromise(): Promise<MongoClient> {
   const uri = process.env.MONGODB_URI;
 
   if (!uri || uri.trim() === '') {
@@ -24,18 +33,39 @@ function getClientPromise(): Promise<MongoClient> {
   const cleanUri = uri.trim();
 
   if (process.env.NODE_ENV === 'development') {
-    if (!global._mongoClientPromise) {
-      const client = new MongoClient(cleanUri);
-      global._mongoClientPromise = client.connect();
+    if (global._mongoClientPromise) {
+      try {
+        return await global._mongoClientPromise;
+      } catch {
+        // Cached promise was rejected (e.g. previous network error); clear and re-establish
+        global._mongoClientPromise = undefined;
+      }
     }
-    return global._mongoClientPromise;
+
+    const client = new MongoClient(cleanUri);
+    const promise = client.connect().catch((err) => {
+      global._mongoClientPromise = undefined;
+      throw err;
+    });
+    global._mongoClientPromise = promise;
+    return promise;
   }
 
-  if (!clientPromise) {
-    const client = new MongoClient(cleanUri);
-    clientPromise = client.connect();
+  if (clientPromise) {
+    try {
+      return await clientPromise;
+    } catch {
+      clientPromise = null;
+    }
   }
-  return clientPromise;
+
+  const client = new MongoClient(cleanUri);
+  const promise = client.connect().catch((err) => {
+    clientPromise = null;
+    throw err;
+  });
+  clientPromise = promise;
+  return promise;
 }
 
 /**

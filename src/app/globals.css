@@ -1,31 +1,57 @@
 @import "tailwindcss";
 
 :root {
-  /* Base surfaces — deep dark */
-  --bg: #07080d;
-  --bg-elevated: #0c0e15;
-  --surface: #10131a;
-  --surface-hover: #151923;
-  --border: rgba(255, 255, 255, 0.06);
-  --border-strong: rgba(255, 255, 255, 0.12);
+  /* ═══════════════════════════════════════════
+     🇮🇳 PREMIUM INDIAN GOVERNMENT THEME
+     Navy + Saffron + Emerald — State-of-the-Art
+     ═══════════════════════════════════════════ */
 
-  /* Text */
-  --text-primary: #eef0f6;
-  --text-secondary: #94a3b8;
-  --text-muted: #4b5672;
+  /* Base surfaces — warm off-white */
+  --bg: #FAFBFD;
+  --bg-elevated: #FFFFFF;
+  --surface: #FFFFFF;
+  --surface-hover: #F4F6FB;
+  --border: rgba(23, 37, 84, 0.08);
+  --border-strong: rgba(23, 37, 84, 0.14);
 
-  /* Accents — Sapphire Blue (primary) + Indigo (secondary) */
-  --accent: #3B82F6;
-  --accent-strong: #60A5FA;
-  --accent-soft: rgba(59, 130, 246, 0.1);
-  --accent-2: #6366F1;
-  --accent-2-soft: rgba(99, 102, 241, 0.1);
-  --accent-user: #3B82F6;
-  --accent-user-soft: rgba(59, 130, 246, 0.12);
+  /* Text — High Contrast Navy */
+  --text-primary: #0C1631;
+  --text-secondary: #3B456B;
+  --text-muted: #6B7499;
 
-  --success: #34d399;
-  --warning: #f59e0b;
-  --danger: #ef4444;
+  /* Primary Accent — Deep Saffron / Kesari */
+  --accent: #E8590C;
+  --accent-strong: #C2410C;
+  --accent-soft: rgba(232, 89, 12, 0.08);
+  --accent-glow: rgba(232, 89, 12, 0.25);
+
+  /* Secondary — Royal Navy */
+  --navy: #172554;
+  --navy-soft: rgba(23, 37, 84, 0.06);
+  --navy-glow: rgba(23, 37, 84, 0.3);
+
+  /* Tertiary — Ashoka Emerald */
+  --emerald: #059669;
+  --emerald-soft: rgba(5, 150, 105, 0.08);
+
+  /* User messages — rich indigo */
+  --accent-user: #4338CA;
+  --accent-user-soft: rgba(67, 56, 202, 0.1);
+
+  /* Status */
+  --success: #059669;
+  --warning: #D97706;
+  --danger: #DC2626;
+
+  /* Sidebar surface — Deep navy glass */
+  --sidebar-bg: linear-gradient(180deg, #0F1A3C 0%, #0A1128 40%, #060D1F 100%);
+  --sidebar-surface: rgba(255, 255, 255, 0.04);
+  --sidebar-surface-hover: rgba(255, 255, 255, 0.07);
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --sidebar-text: #CBD5E1;
+  --sidebar-text-muted: #64748B;
+  --sidebar-accent-bg: rgba(232, 89, 12, 0.12);
+  --sidebar-accent-border: rgba(232, 89, 12, 0.35);
 }
 
 * {
@@ -46,7 +72,7 @@ body {
 }
 
 /* ═══════════════════════════════════════════
-   Ambient Background — Subtle Floating Orbs
+   Ambient Background — Saffron & Navy Orbs
    ═══════════════════════════════════════════ */
 .ambient-bg {
   position: fixed;
@@ -59,35 +85,35 @@ body {
 .ambient-bg::before {
   content: "";
   position: absolute;
-  top: -15%;
-  left: -10%;
-  width: 50%;
-  height: 50%;
-  background: radial-gradient(circle, rgba(59, 130, 246, 0.06) 0%, transparent 70%);
-  filter: blur(80px);
-  animation: ambientDriftA 20s ease-in-out infinite alternate;
+  top: -20%;
+  left: -15%;
+  width: 55%;
+  height: 55%;
+  background: radial-gradient(circle, rgba(232, 89, 12, 0.05) 0%, transparent 65%);
+  filter: blur(90px);
+  animation: ambientDriftA 22s ease-in-out infinite alternate;
 }
 
 .ambient-bg::after {
   content: "";
   position: absolute;
-  bottom: -20%;
-  right: -10%;
-  width: 55%;
-  height: 55%;
-  background: radial-gradient(circle, rgba(99, 102, 241, 0.05) 0%, transparent 70%);
-  filter: blur(80px);
-  animation: ambientDriftB 25s ease-in-out infinite alternate;
+  bottom: -25%;
+  right: -15%;
+  width: 60%;
+  height: 60%;
+  background: radial-gradient(circle, rgba(23, 37, 84, 0.06) 0%, transparent 65%);
+  filter: blur(90px);
+  animation: ambientDriftB 28s ease-in-out infinite alternate;
 }
 
 @keyframes ambientDriftA {
   0% { transform: translate(0, 0) scale(1); }
-  100% { transform: translate(5%, 8%) scale(1.15); }
+  100% { transform: translate(6%, 10%) scale(1.2); }
 }
 
 @keyframes ambientDriftB {
   0% { transform: translate(0, 0) scale(1); }
-  100% { transform: translate(-6%, -5%) scale(1.1); }
+  100% { transform: translate(-8%, -6%) scale(1.15); }
 }
 
 /* Fine grain noise for depth */
@@ -96,7 +122,7 @@ body {
   inset: 0;
   z-index: 50;
   pointer-events: none;
-  opacity: 0.018;
+  opacity: 0.015;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
@@ -107,8 +133,8 @@ body {
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(59, 130, 246, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(59, 130, 246, 0.03) 1px, transparent 1px);
+    linear-gradient(rgba(23, 37, 84, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(23, 37, 84, 0.04) 1px, transparent 1px);
   background-size: 60px 60px;
   mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black, transparent);
   -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black, transparent);
@@ -121,7 +147,7 @@ body {
 }
 
 /* ═══════════════════════════════════════════
-   Scrollbar
+   Scrollbar — Saffron accent
    ═══════════════════════════════════════════ */
 ::-webkit-scrollbar {
   width: 6px;
@@ -133,21 +159,21 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(23, 37, 84, 0.15);
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.16);
+  background: rgba(232, 89, 12, 0.35);
 }
 
 /* ═══════════════════════════════════════════
-   Glass surface
+   Glass surface — warm tint
    ═══════════════════════════════════════════ */
 .glass {
-  background: rgba(10, 10, 15, 0.75);
-  backdrop-filter: blur(24px) saturate(1.2);
-  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(24px) saturate(1.3);
+  -webkit-backdrop-filter: blur(24px) saturate(1.3);
 }
 
 /* ═══════════════════════════════════════════
@@ -253,7 +279,7 @@ body {
 }
 
 /* ═══════════════════════════════════════════
-   Animated gradient text
+   Animated gradient text — Saffron to Navy
    ═══════════════════════════════════════════ */
 @keyframes gradientShift {
   0% { background-position: 0% 50%; }
@@ -262,7 +288,7 @@ body {
 }
 
 .gradient-text {
-  background: linear-gradient(270deg, #3B82F6, #6366F1, #818CF8, #3B82F6);
+  background: linear-gradient(270deg, #E8590C, #C2410C, #172554, #E8590C);
   background-size: 300% 300%;
   -webkit-background-clip: text;
   background-clip: text;
@@ -282,8 +308,8 @@ body {
 
 .tilt-card-3d:hover {
   box-shadow:
-    0 20px 60px rgba(59, 130, 246, 0.08),
-    0 8px 24px rgba(0, 0, 0, 0.4);
+    0 20px 60px rgba(232, 89, 12, 0.06),
+    0 8px 24px rgba(0, 0, 0, 0.08);
 }
 
 .tilt-inner {
@@ -319,9 +345,9 @@ body {
   padding: 1px;
   background: conic-gradient(
     from var(--border-angle, 0deg),
-    transparent 30%,
-    rgba(59, 130, 246, 0.4) 50%,
-    transparent 70%
+    transparent 25%,
+    rgba(232, 89, 12, 0.5) 50%,
+    transparent 75%
   );
   mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
@@ -375,14 +401,14 @@ body {
 .particle-2 {
   width: 3px;
   height: 3px;
-  background: var(--accent-2);
+  background: var(--emerald);
   animation: float2 15s ease-in-out infinite;
 }
 
 .particle-3 {
   width: 5px;
   height: 5px;
-  background: var(--accent);
+  background: var(--navy);
   animation: float3 18s ease-in-out infinite;
 }
 
@@ -396,7 +422,7 @@ body {
 .particle-5 {
   width: 3px;
   height: 3px;
-  background: var(--accent-2);
+  background: var(--emerald);
   animation: float2 14s ease-in-out infinite reverse;
 }
 
@@ -445,11 +471,11 @@ body {
 @keyframes pulseDot {
   0%, 100% {
     opacity: 0.7;
-    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.5);
+    box-shadow: 0 0 0 0 rgba(5, 150, 105, 0.5);
   }
   50% {
     opacity: 1;
-    box-shadow: 0 0 0 6px rgba(59, 130, 246, 0);
+    box-shadow: 0 0 0 6px rgba(5, 150, 105, 0);
   }
 }
 
@@ -458,19 +484,19 @@ body {
 }
 
 /* ═══════════════════════════════════════════
-   Search bar — animated border glow
+   Search bar — animated border glow (saffron)
    ═══════════════════════════════════════════ */
 @keyframes searchGlow {
   0%, 100% {
-    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0), 0 4px 20px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 0 0 0 rgba(232, 89, 12, 0), 0 4px 24px rgba(0, 0, 0, 0.05);
   }
   50% {
-    box-shadow: 0 0 30px 4px rgba(59, 130, 246, 0.08), 0 4px 20px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 0 30px 4px rgba(232, 89, 12, 0.08), 0 4px 24px rgba(0, 0, 0, 0.05);
   }
 }
 
 .search-focus-glow:focus-within {
-  border-color: rgba(59, 130, 246, 0.4) !important;
+  border-color: rgba(232, 89, 12, 0.45) !important;
   animation: searchGlow 2.5s ease-in-out infinite;
 }
 
@@ -484,14 +510,14 @@ body {
 
 .card-hover:hover {
   transform: translateY(-4px) scale(1.01);
-  border-color: rgba(59, 130, 246, 0.2) !important;
+  border-color: rgba(232, 89, 12, 0.2) !important;
   box-shadow:
-    0 12px 40px rgba(59, 130, 246, 0.06),
-    0 4px 16px rgba(0, 0, 0, 0.3);
+    0 12px 40px rgba(232, 89, 12, 0.06),
+    0 4px 16px rgba(0, 0, 0, 0.04);
 }
 
 /* ═══════════════════════════════════════════
-   Nav underline animation
+   Nav underline animation — saffron
    ═══════════════════════════════════════════ */
 .nav-link {
   position: relative;
@@ -505,11 +531,11 @@ body {
   left: 50%;
   width: 0;
   height: 2px;
-  background: var(--accent);
+  background: linear-gradient(90deg, var(--accent), var(--accent-strong));
   border-radius: 1px;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   transform: translateX(-50%);
-  box-shadow: 0 0 8px rgba(59, 130, 246, 0.4);
+  box-shadow: 0 0 8px rgba(232, 89, 12, 0.3);
 }
 
 .nav-link:hover::after,
@@ -534,7 +560,7 @@ body {
   position: absolute;
   inset: -3px;
   border-radius: inherit;
-  background: radial-gradient(circle, rgba(59, 130, 246, 0.15), transparent 70%);
+  background: radial-gradient(circle, rgba(232, 89, 12, 0.15), transparent 70%);
   opacity: 0;
   transition: opacity 0.4s ease;
   z-index: -1;
@@ -548,8 +574,8 @@ body {
    Feature pill with animated border
    ═══════════════════════════════════════════ */
 @keyframes featurePillGlow {
-  0%, 100% { box-shadow: 0 0 0 rgba(59, 130, 246, 0); }
-  50% { box-shadow: 0 0 12px rgba(59, 130, 246, 0.1); }
+  0%, 100% { box-shadow: 0 0 0 rgba(232, 89, 12, 0); }
+  50% { box-shadow: 0 0 12px rgba(232, 89, 12, 0.12); }
 }
 
 .feature-pill {
@@ -573,7 +599,7 @@ body {
    ═══════════════════════════════════════════ */
 @keyframes textGlowReveal {
   0% {
-    text-shadow: 0 0 10px rgba(59, 130, 246, 0.6);
+    text-shadow: 0 0 10px rgba(232, 89, 12, 0.4);
   }
   100% {
     text-shadow: none;
@@ -629,7 +655,7 @@ body {
 }
 
 /* ═══════════════════════════════════════════
-   Verified badge
+   Verified badge — Emerald/Saffron
    ═══════════════════════════════════════════ */
 .verified-badge {
   display: inline-flex;
@@ -640,15 +666,15 @@ body {
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.02em;
-  background: rgba(59, 130, 246, 0.08);
-  color: var(--accent);
-  border: 1px solid rgba(59, 130, 246, 0.15);
+  background: rgba(5, 150, 105, 0.08);
+  color: var(--emerald);
+  border: 1px solid rgba(5, 150, 105, 0.2);
   transition: all 0.3s ease;
 }
 
 .group:hover .verified-badge {
-  background: rgba(59, 130, 246, 0.14);
-  box-shadow: 0 0 12px rgba(59, 130, 246, 0.08);
+  background: rgba(5, 150, 105, 0.14);
+  box-shadow: 0 0 12px rgba(5, 150, 105, 0.08);
 }
 
 /* ═══════════════════════════════════════════
@@ -659,7 +685,7 @@ body {
 }
 
 .btn-press:hover {
-  box-shadow: 0 0 20px rgba(59, 130, 246, 0.25);
+  box-shadow: 0 0 20px rgba(232, 89, 12, 0.2);
 }
 
 .btn-press:active {
@@ -693,7 +719,7 @@ body {
   bottom: 0;
   width: 0;
   height: 2px;
-  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  background: linear-gradient(90deg, var(--accent), var(--emerald));
   transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -702,7 +728,7 @@ body {
 }
 
 /* ═══════════════════════════════════════════
-   Section divider glow
+   Section divider glow — tricolor
    ═══════════════════════════════════════════ */
 .section-divider {
   position: relative;
@@ -716,8 +742,95 @@ body {
   left: 50%;
   transform: translateX(-50%);
   top: -1px;
-  width: 120px;
+  width: 180px;
   height: 3px;
-  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  background: linear-gradient(90deg, var(--accent), var(--emerald), var(--navy));
   border-radius: 2px;
+  opacity: 0.7;
+}
+
+/* ═══════════════════════════════════════════
+   Indian Tricolor Top Accent Bar
+   ═══════════════════════════════════════════ */
+.tricolor-bar {
+  height: 3px;
+  background: linear-gradient(90deg,
+    #E8590C 0%, #E8590C 33%,
+    #FFFFFF 33%, #FFFFFF 66%,
+    #059669 66%, #059669 100%
+  );
+  position: relative;
+  z-index: 100;
+}
+
+/* ═══════════════════════════════════════════
+   Saffron Accent Gradient Headings
+   ═══════════════════════════════════════════ */
+.heading-saffron {
+  background: linear-gradient(135deg, #E8590C 0%, #C2410C 50%, #172554 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ═══════════════════════════════════════════
+   Navy-to-Saffron CTA Button
+   ═══════════════════════════════════════════ */
+.btn-cta {
+  background: linear-gradient(135deg, #E8590C 0%, #C2410C 100%);
+  color: white;
+  border: none;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.btn-cta::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.btn-cta:hover::before {
+  left: 100%;
+}
+
+.btn-cta:hover {
+  box-shadow: 0 8px 25px -5px rgba(232, 89, 12, 0.4);
+  transform: translateY(-1px);
+}
+
+/* ═══════════════════════════════════════════
+   Ashoka Chakra Spinner
+   ═══════════════════════════════════════════ */
+@keyframes chakraSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.chakra-spinner {
+  animation: chakraSpin 8s linear infinite;
+}
+
+/* ═══════════════════════════════════════════
+   Sidebar slide-in
+   ═══════════════════════════════════════════ */
+@keyframes slideInFromLeft {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.slide-in-left {
+  animation: slideInFromLeft 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
 }

@@ -60,6 +60,10 @@ export async function GET(req: Request, context: RouteContext) {
       text: msg.text,
       sourceName: msg.sourceName,
       sourceUrl: msg.sourceUrl,
+      schemeName: msg.schemeName,
+      sourceType: msg.sourceType || (msg.sender === 'assistant' ? 'rag_grounded' : undefined),
+      confidence: msg.confidence,
+      grounded: msg.grounded,
       retrievalMethod: msg.retrievalMethod,
       isSupported: msg.isSupported,
       serviceId: msg.serviceId,
@@ -135,6 +139,74 @@ export async function DELETE(req: Request, context: RouteContext) {
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error deleting conversation thread:', (error as Error).message);
+    return NextResponse.json(
+      { error: 'Internal Server Error' },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * PATCH /api/conversations/[id]
+ * Updates conversation title.
+ * Strictly verifies ownership against authenticated session user.
+ */
+export async function PATCH(req: Request, context: RouteContext) {
+  try {
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    const { id } = await context.params;
+
+    if (!id || !ObjectId.isValid(id)) {
+      return NextResponse.json(
+        { error: 'Invalid conversation ID format' },
+        { status: 400 }
+      );
+    }
+
+    const body = await req.json().catch(() => ({}));
+    const newTitle = typeof body?.title === 'string' ? body.title.trim() : '';
+
+    if (!newTitle) {
+      return NextResponse.json(
+        { error: 'Title cannot be empty' },
+        { status: 400 }
+      );
+    }
+
+    const convObjectId = new ObjectId(id);
+    const userObjectId = new ObjectId(sessionUser.id);
+    const conversationsCollection = await getConversationsCollection();
+
+    const result = await conversationsCollection.findOneAndUpdate(
+      { _id: convObjectId, userId: userObjectId },
+      { $set: { title: newTitle.slice(0, 100), updatedAt: new Date() } },
+      { returnDocument: 'after' }
+    );
+
+    if (!result) {
+      return NextResponse.json(
+        { error: 'Conversation not found' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      conversation: {
+        id: result._id.toHexString(),
+        title: result.title,
+        updatedAt: result.updatedAt,
+      },
+    });
+  } catch (error) {
+    console.error('Error updating conversation title:', (error as Error).message);
     return NextResponse.json(
       { error: 'Internal Server Error' },
       { status: 500 }

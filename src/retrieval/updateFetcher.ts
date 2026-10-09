@@ -336,10 +336,10 @@ export async function fetchLiveGovernmentUpdates(): Promise<GovernmentUpdate[] |
 
     // Priority for Gujarati:
     // 1. High-quality Gemini translation
-    // 2. Hindi or English title fallback
+    // 2. English title fallback
     const guTitle = (translation?.gu && translation.gu.length > 0)
       ? translation.gu
-      : (hiTitle !== enItem.title ? hiTitle : enItem.title);
+      : enItem.title;
 
     const formattedDate = formatPublicationDate(enItem.pubDate);
     const category = inferCategory(enItem.title);

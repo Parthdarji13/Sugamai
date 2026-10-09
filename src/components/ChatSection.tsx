@@ -17,6 +17,7 @@ interface ChatSectionProps {
   inputRef: React.RefObject<HTMLTextAreaElement | null>;
   onNewChat?: () => void;
   onBackToHome?: () => void;
+  onToggleHistory?: () => void;
 }
 
 export default function ChatSection({
@@ -30,6 +31,7 @@ export default function ChatSection({
   inputRef,
   onNewChat,
   onBackToHome,
+  onToggleHistory,
 }: ChatSectionProps) {
   const showTypingIndicator =
     isLoading && (messages.length === 0 || messages[messages.length - 1].sender !== 'assistant');
@@ -41,7 +43,7 @@ export default function ChatSection({
         <button
           type="button"
           onClick={onBackToHome || onNewChat}
-          className="inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-semibold text-[var(--text-secondary)] transition-colors hover:text-white hover:border-[rgba(255,255,255,0.2)]"
+          className="inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-semibold text-[var(--text-secondary)] transition-colors hover:text-[var(--accent)] hover:border-[rgba(232,89,12,0.25)] hover:bg-[var(--accent-soft)]"
           style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}
         >
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -50,19 +52,36 @@ export default function ChatSection({
           {text.backToHome}
         </button>
 
-        {messages.length > 0 && onNewChat && (
-          <button
-            type="button"
-            onClick={onNewChat}
-            className="inline-flex items-center gap-1.5 rounded-full border border-dashed px-3.5 py-1.5 text-xs font-semibold text-[var(--accent)] transition-all hover:bg-[var(--accent)]/10 hover:border-[var(--accent)]"
-            style={{ borderColor: 'var(--border-strong)', background: 'var(--surface)' }}
-          >
-            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-            </svg>
-            <span>{text.newChat}</span>
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {onToggleHistory && (
+            <button
+              type="button"
+              onClick={onToggleHistory}
+              className="inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-semibold text-[var(--text-secondary)] transition-all hover:text-[var(--accent)] hover:border-[rgba(232,89,12,0.25)] hover:bg-[var(--accent-soft)]"
+              style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}
+              title="Chat History"
+            >
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>History</span>
+            </button>
+          )}
+
+          {onNewChat && (
+            <button
+              type="button"
+              onClick={onNewChat}
+              className="inline-flex items-center gap-1.5 rounded-full border border-dashed px-3.5 py-1.5 text-xs font-semibold text-[var(--accent)] transition-all hover:bg-[var(--accent)]/10 hover:border-[var(--accent)]"
+              style={{ borderColor: 'var(--border-strong)', background: 'var(--surface)' }}
+            >
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+              <span>{text.newChat}</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Main chat body */}
@@ -74,9 +93,9 @@ export default function ChatSection({
             <div
               className="relative mb-5 flex h-16 w-16 items-center justify-center rounded-2xl border shadow-lg"
               style={{
-                background: 'linear-gradient(135deg, rgba(59,130,246,0.15) 0%, rgba(0,230,118,0.1) 100%)',
-                borderColor: 'rgba(59,130,246,0.3)',
-                boxShadow: '0 0 35px -5px rgba(59,130,246,0.25)',
+                background: 'linear-gradient(135deg, rgba(232,89,12,0.15) 0%, rgba(5,150,105,0.1) 100%)',
+                borderColor: 'rgba(232,89,12,0.3)',
+                boxShadow: '0 0 35px -5px rgba(232,89,12,0.2)',
               }}
             >
               <svg className="h-8 w-8" style={{ color: 'var(--accent)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -88,7 +107,7 @@ export default function ChatSection({
               </span>
             </div>
 
-            <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white mb-2">
+            <h2 className="text-xl sm:text-2xl font-bold tracking-tight mb-2" style={{ color: 'var(--navy)' }}>
               {text.askBoxHeadline}
             </h2>
             <p className="max-w-md text-xs sm:text-sm text-[var(--text-secondary)] mb-8">
@@ -104,7 +123,7 @@ export default function ChatSection({
                     key={idx}
                     type="button"
                     onClick={() => handleSend(suggestion)}
-                    className="group flex flex-col justify-between rounded-xl border p-3.5 text-left transition-all duration-200 hover:border-[var(--accent)] hover:bg-[rgba(59,130,246,0.06)] active:scale-[0.98]"
+                    className="group flex flex-col justify-between rounded-xl border p-3.5 text-left transition-all duration-200 hover:border-[rgba(232,89,12,0.25)] hover:bg-[var(--accent-soft)] hover:shadow-sm active:scale-[0.98]"
                     style={{
                       background: 'var(--surface)',
                       borderColor: 'var(--border)',
@@ -113,7 +132,7 @@ export default function ChatSection({
                     <span className="font-mono text-[9px] font-bold uppercase tracking-wider text-[var(--accent)]">
                       {tag}
                     </span>
-                    <span className="mt-2 text-xs font-semibold leading-snug text-white/90 group-hover:text-white">
+                    <span className="mt-2 text-xs font-semibold leading-snug text-[var(--text-secondary)] group-hover:text-[var(--accent)]">
                       {suggestion}
                     </span>
                   </button>

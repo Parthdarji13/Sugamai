@@ -37,10 +37,31 @@ export interface ChatMessageDocument {
   text: string;
   sourceName?: string;
   sourceUrl?: string;
+  schemeName?: string;
+  sourceType?: string;
+  confidence?: string;
+  grounded?: boolean;
   retrievalMethod?: string;
   isSupported?: boolean;
   serviceId?: string;
   createdAt: Date;
+}
+
+export interface GovernmentSchemeDocument {
+  _id?: ObjectId;
+  schemeId: string;
+  schemeName: string;
+  schemeShortTitle: string;
+  nodalMinistry: string;
+  schemeCategory: string;
+  level: 'Central' | 'State' | 'Concurrent';
+  benefits: string;
+  eligibilityCriteria: string;
+  documentsRequired: string;
+  applicationProcess: string;
+  officialPortalUrl: string;
+  sourceName: string;
+  lastVerifiedAt: Date;
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -52,6 +73,7 @@ export const DB_COLLECTIONS = {
   USER_PREFERENCES: 'user_preferences',
   CONVERSATIONS: 'conversations',
   CHAT_MESSAGES: 'chat_messages',
+  GOVERNMENT_SCHEMES: 'government_schemes',
 } as const;
 
 /* ══════════════════════════════════════════════════════════
@@ -76,4 +98,9 @@ export async function getConversationsCollection(): Promise<Collection<Conversat
 export async function getChatMessagesCollection(): Promise<Collection<ChatMessageDocument>> {
   const db = await getDatabase();
   return db.collection<ChatMessageDocument>(DB_COLLECTIONS.CHAT_MESSAGES);
+}
+
+export async function getGovernmentSchemesCollection(): Promise<Collection<GovernmentSchemeDocument>> {
+  const db = await getDatabase();
+  return db.collection<GovernmentSchemeDocument>(DB_COLLECTIONS.GOVERNMENT_SCHEMES);
 }

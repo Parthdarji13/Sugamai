@@ -3,6 +3,7 @@ import {
   getUserPreferencesCollection,
   getConversationsCollection,
   getChatMessagesCollection,
+  getGovernmentSchemesCollection,
 } from './dbCollections';
 
 export interface IndexInitReport {
@@ -85,6 +86,29 @@ export async function initializeDatabaseIndexes(): Promise<IndexInitReport[]> {
     report.push({
       collection: 'chat_messages',
       indexName: 'idx_chat_messages_conversationId_createdAt',
+      status: 'failed',
+      error: (err as Error).message,
+    });
+  }
+
+  // 5. government_schemes: text index
+  try {
+    const governmentSchemes = await getGovernmentSchemesCollection();
+    const indexName = await governmentSchemes.createIndex(
+      {
+        schemeName: 'text',
+        schemeShortTitle: 'text',
+        schemeCategory: 'text',
+        benefits: 'text',
+        eligibilityCriteria: 'text',
+      },
+      { name: 'idx_government_schemes_text' }
+    );
+    report.push({ collection: 'government_schemes', indexName, status: 'verified' });
+  } catch (err) {
+    report.push({
+      collection: 'government_schemes',
+      indexName: 'idx_government_schemes_text',
       status: 'failed',
       error: (err as Error).message,
     });

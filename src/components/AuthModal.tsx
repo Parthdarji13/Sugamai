@@ -202,7 +202,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess, language }: 
         style={{
           background: 'linear-gradient(145deg, rgba(16,19,26,0.98) 0%, rgba(12,14,21,0.99) 100%)',
           borderColor: 'var(--border-strong)',
-          boxShadow: '0 20px 50px -10px rgba(0,0,0,0.8), 0 0 30px -5px rgba(59,130,246,0.15)',
+          boxShadow: '0 20px 50px -10px rgba(0,0,0,0.8), 0 0 30px -5px rgba(232,89,12,0.15)',
         }}
       >
         {/* Glow accent */}
@@ -344,8 +344,8 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess, language }: 
             disabled={isLoading}
             className="btn-press mt-2 flex w-full items-center justify-center rounded-xl py-3 text-xs font-bold text-white transition-all disabled:opacity-50"
             style={{
-              background: 'linear-gradient(135deg, var(--accent) 0%, #2563EB 100%)',
-              boxShadow: '0 4px 15px -2px rgba(59,130,246,0.4)',
+              background: 'linear-gradient(135deg, var(--accent) 0%, #C2410C 100%)',
+              boxShadow: '0 4px 15px -2px rgba(232,89,12,0.4)',
             }}
           >
             {isLoading ? (

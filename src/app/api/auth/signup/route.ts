@@ -105,9 +105,10 @@ export async function POST(req: Request) {
       { status: 201 }
     );
   } catch (error) {
-    console.error('Error during user signup:', (error as Error).message);
+    const errorMsg = (error as Error).message || 'Internal Server Error';
+    console.error('Error during user signup:', errorMsg);
     return NextResponse.json(
-      { error: 'Internal Server Error' },
+      { error: process.env.NODE_ENV === 'development' ? errorMsg : 'Internal Server Error' },
       { status: 500 }
     );
   }

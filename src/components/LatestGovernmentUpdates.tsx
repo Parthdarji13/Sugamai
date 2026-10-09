@@ -122,41 +122,41 @@ export default function LatestGovernmentUpdates({ language }: LatestGovernmentUp
         {/* Header Skeleton */}
         <div className="mb-8 flex flex-col justify-between gap-4 border-b pb-6 sm:flex-row sm:items-end" style={{ borderColor: 'var(--border)' }}>
           <div className="space-y-2">
-            <div className="h-3 w-28 rounded bg-white/5 animate-pulse" />
-            <div className="h-7 w-64 rounded bg-white/5 animate-pulse" />
-            <div className="h-4 w-48 rounded bg-white/5 animate-pulse" />
+            <div className="h-3 w-28 rounded bg-gray-200 animate-pulse" />
+            <div className="h-7 w-64 rounded bg-gray-200 animate-pulse" />
+            <div className="h-4 w-48 rounded bg-gray-200 animate-pulse" />
           </div>
-          <div className="h-8 w-36 rounded-full bg-white/5 animate-pulse" />
+          <div className="h-8 w-36 rounded-full bg-gray-200 animate-pulse" />
         </div>
 
         {/* Dashboard Skeleton Grid */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
           {/* Featured Skeleton */}
-          <div className="rounded-2xl border p-6 lg:col-span-7" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
+          <div className="rounded-3xl border p-6 lg:col-span-7 bg-white shadow-sm" style={{ borderColor: 'var(--border)' }}>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <div className="h-5 w-24 rounded-full bg-white/5 animate-pulse" />
-                <div className="h-4 w-20 rounded bg-white/5 animate-pulse" />
+                <div className="h-5 w-24 rounded-full bg-gray-200 animate-pulse" />
+                <div className="h-4 w-20 rounded bg-gray-200 animate-pulse" />
               </div>
-              <div className="h-7 w-5/6 rounded bg-white/5 animate-pulse" />
-              <div className="h-7 w-4/6 rounded bg-white/5 animate-pulse" />
+              <div className="h-7 w-5/6 rounded bg-gray-200 animate-pulse" />
+              <div className="h-7 w-4/6 rounded bg-gray-200 animate-pulse" />
               <div className="space-y-2 pt-2">
-                <div className="h-4 w-full rounded bg-white/5 animate-pulse" />
-                <div className="h-4 w-11/12 rounded bg-white/5 animate-pulse" />
-                <div className="h-4 w-3/4 rounded bg-white/5 animate-pulse" />
+                <div className="h-4 w-full rounded bg-gray-200 animate-pulse" />
+                <div className="h-4 w-11/12 rounded bg-gray-200 animate-pulse" />
+                <div className="h-4 w-3/4 rounded bg-gray-200 animate-pulse" />
               </div>
-              <div className="h-10 w-44 rounded-xl bg-white/5 animate-pulse pt-4" />
+              <div className="h-10 w-44 rounded-full bg-gray-200 animate-pulse pt-4" />
             </div>
           </div>
 
           {/* List Skeleton */}
-          <div className="space-y-3 rounded-2xl border p-6 lg:col-span-5" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
+          <div className="space-y-3 rounded-3xl border p-6 lg:col-span-5 bg-white shadow-sm" style={{ borderColor: 'var(--border)' }}>
             {[1, 2, 3].map((n) => (
               <div key={n} className="flex gap-3 border-b pb-3.5 last:border-0" style={{ borderColor: 'var(--border)' }}>
-                <div className="h-6 w-6 rounded-md bg-white/5 animate-pulse shrink-0" />
+                <div className="h-6 w-6 rounded-md bg-gray-200 animate-pulse shrink-0" />
                 <div className="w-full space-y-2">
-                  <div className="h-3 w-28 rounded bg-white/5 animate-pulse" />
-                  <div className="h-4 w-4/5 rounded bg-white/5 animate-pulse" />
+                  <div className="h-3 w-28 rounded bg-gray-200 animate-pulse" />
+                  <div className="h-4 w-4/5 rounded bg-gray-200 animate-pulse" />
                 </div>
               </div>
             ))}
@@ -209,7 +209,7 @@ export default function LatestGovernmentUpdates({ language }: LatestGovernmentUp
               {text.sectionTag}
             </span>
           </div>
-          <h3 className="text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
+          <h3 className="text-2xl font-extrabold tracking-tight text-[var(--text-primary)] sm:text-3xl">
             {text.sectionTitle}
           </h3>
           <p className="mt-1 text-xs font-medium text-[var(--text-secondary)] sm:text-sm">
@@ -219,17 +219,17 @@ export default function LatestGovernmentUpdates({ language }: LatestGovernmentUp
 
         {/* Live Feed Status Badge */}
         <div
-          className="flex items-center gap-3 self-start rounded-full border px-4 py-1.5 sm:self-auto"
-          style={{ borderColor: 'var(--border-strong)', background: 'var(--surface)' }}
+          className="flex items-center gap-3 self-start rounded-full border px-4 py-1.5 sm:self-auto bg-white shadow-sm"
+          style={{ borderColor: 'var(--border-strong)' }}
         >
           <span className="relative flex h-2 w-2">
-            <span className="relative inline-flex h-2 w-2 rounded-full" style={{ background: 'var(--text-muted)' }} />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500" />
           </span>
           <div className="flex flex-col text-left">
-            <span className="font-mono text-[10px] font-bold tracking-wider text-white">
+            <span className="font-mono text-[10px] font-bold tracking-wider text-gray-900">
               {text.liveBadge}
             </span>
-            <span className="text-[9px] font-medium text-[var(--text-muted)]">
+            <span className="text-[9px] font-medium text-gray-500">
               {text.liveStatus}
             </span>
           </div>
@@ -242,21 +242,19 @@ export default function LatestGovernmentUpdates({ language }: LatestGovernmentUp
         {/* ═══ 1. FEATURED DOMINANT DISPATCH (Left / 7 cols) ═══ */}
         {featured && (
           <div
-            className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border p-6 transition-all duration-300 hover:border-[rgba(59,130,246,0.3)] lg:col-span-7 sm:p-8"
+            className="group relative flex flex-col justify-between overflow-hidden rounded-3xl border p-6 transition-all duration-300 hover:border-[rgba(232,89,12,0.3)] lg:col-span-7 sm:p-8 hover:shadow-xl bg-white shadow-md"
             style={{
-              background: 'linear-gradient(145deg, rgba(16,19,26,0.95) 0%, rgba(12,14,21,0.95) 100%)',
               borderColor: 'var(--border)',
-              boxShadow: '0 8px 32px -4px rgba(0,0,0,0.5)',
             }}
           >
             {/* Subtle top ambient glow */}
             <div
-              className="pointer-events-none absolute -top-24 -left-24 h-56 w-56 rounded-full opacity-15 blur-3xl transition-opacity group-hover:opacity-25"
+              className="pointer-events-none absolute -top-24 -left-24 h-56 w-56 rounded-full opacity-5 blur-3xl transition-opacity group-hover:opacity-10"
               style={{ background: 'var(--accent)' }}
             />
 
             {/* Corner Tech Watermark */}
-            <div className="pointer-events-none absolute top-4 right-4 font-mono text-[10px] font-bold tracking-widest text-[var(--text-muted)] opacity-40">
+            <div className="pointer-events-none absolute top-4 right-4 font-mono text-[10px] font-bold tracking-widest text-gray-300 opacity-80">
               [DISPATCH.01]
             </div>
 
@@ -279,13 +277,13 @@ export default function LatestGovernmentUpdates({ language }: LatestGovernmentUp
               </div>
 
               {/* Dominant Headline */}
-              <h4 className="text-lg font-bold leading-snug tracking-tight text-white transition-colors duration-200 group-hover:text-[var(--accent-strong)] sm:text-xl md:text-2xl">
+              <h4 className="text-lg font-bold leading-snug tracking-tight text-gray-900 transition-colors duration-200 group-hover:text-[var(--accent)] sm:text-xl md:text-2xl">
                 {featuredTitle}
               </h4>
 
               {/* Short Summary */}
               {featuredSummary && (
-                <p className="mt-3.5 text-xs font-normal leading-relaxed text-[var(--text-secondary)] sm:text-sm">
+                <p className="mt-3.5 text-xs font-normal leading-relaxed text-gray-600 sm:text-sm">
                   {featuredSummary}
                 </p>
               )}
@@ -300,10 +298,10 @@ export default function LatestGovernmentUpdates({ language }: LatestGovernmentUp
                 href={featured.sourceUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="btn-press inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-xs font-bold text-white transition-all duration-200"
+                className="btn-press inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-xs font-bold text-white transition-all duration-200"
                 style={{
-                  background: 'linear-gradient(135deg, var(--accent) 0%, #2563eb 100%)',
-                  boxShadow: '0 4px 16px rgba(59, 130, 246, 0.25)',
+                  background: 'var(--accent)',
+                  boxShadow: '0 4px 14px rgba(232, 89, 12, 0.25)',
                 }}
               >
                 <span>{text.btnLabel}</span>
@@ -312,8 +310,8 @@ export default function LatestGovernmentUpdates({ language }: LatestGovernmentUp
                 </svg>
               </a>
 
-              <span className="flex items-center gap-1.5 text-[10px] font-semibold text-[var(--text-muted)]">
-                <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} style={{ color: 'var(--accent)' }}>
+              <span className="flex items-center gap-1.5 text-[10px] font-semibold text-gray-500">
+                <svg className="h-3 w-3 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 {text.verifiedNotice}
@@ -324,11 +322,9 @@ export default function LatestGovernmentUpdates({ language }: LatestGovernmentUp
 
         {/* ═══ 2. STREAM / OTHER UPDATES (Right / 5 cols) ═══ */}
         <div
-          className="flex flex-col justify-between rounded-2xl border p-5 sm:p-6 lg:col-span-5"
+          className="flex flex-col justify-between rounded-3xl border p-5 sm:p-6 lg:col-span-5 bg-white shadow-md"
           style={{
-            background: 'var(--surface)',
             borderColor: 'var(--border)',
-            boxShadow: '0 8px 24px -4px rgba(0,0,0,0.4)',
           }}
         >
           <div className="mb-4 flex items-center justify-between border-b pb-3" style={{ borderColor: 'var(--border)' }}>
@@ -353,25 +349,24 @@ export default function LatestGovernmentUpdates({ language }: LatestGovernmentUp
                   href={update.sourceUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group flex items-start gap-3.5 py-3.5 transition-all duration-200 hover:pl-1"
+                  className="group flex items-start gap-3.5 py-3.5 transition-all duration-200 hover:pl-2"
                 >
                   {/* Monospace Number Node */}
                   <span
-                    className="font-mono text-xs font-bold transition-colors group-hover:text-[var(--accent)] shrink-0 pt-0.5"
-                    style={{ color: 'var(--text-muted)' }}
+                    className="font-mono text-xs font-bold transition-colors group-hover:text-[var(--accent)] shrink-0 pt-0.5 text-gray-400"
                   >
                     {itemNum}
                   </span>
 
                   {/* Body Content */}
                   <div className="flex-1 min-w-0">
-                    <h5 className="text-xs font-semibold leading-snug text-white/90 transition-colors duration-150 group-hover:text-[var(--accent-strong)] line-clamp-2">
+                    <h5 className="text-sm font-semibold leading-snug text-gray-800 transition-colors duration-150 group-hover:text-[var(--accent)] line-clamp-2">
                       {itemTitle}
                     </h5>
 
                     {/* Metadata line */}
-                    <div className="mt-1.5 flex items-center gap-1.5 text-[10px] text-[var(--text-muted)]">
-                      <span className="truncate max-w-[150px] font-medium text-[var(--text-secondary)]" title={itemDept}>
+                    <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-gray-500">
+                      <span className="truncate max-w-[150px] font-medium text-gray-600" title={itemDept}>
                         {itemDept}
                       </span>
                       <span>•</span>
@@ -380,7 +375,7 @@ export default function LatestGovernmentUpdates({ language }: LatestGovernmentUp
                   </div>
 
                   {/* Arrow Indicator */}
-                  <div className="shrink-0 text-[var(--text-muted)] transition-transform duration-200 group-hover:translate-x-1 group-hover:text-[var(--accent)] pt-1">
+                  <div className="shrink-0 text-gray-300 transition-transform duration-200 group-hover:translate-x-1 group-hover:text-[var(--accent)] pt-1">
                     <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                     </svg>

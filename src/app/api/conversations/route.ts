@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { ObjectId } from 'mongodb';
 import { getSessionUser } from '@/lib/auth';
-import { getConversationsCollection, ConversationDocument } from '@/lib/dbCollections';
+import { getConversationsCollection, getChatMessagesCollection, ConversationDocument } from '@/lib/dbCollections';
 
 /**
  * GET /api/conversations
@@ -96,6 +96,57 @@ export async function POST(req: Request) {
     );
   } catch (error) {
     console.error('Error creating conversation:', (error as Error).message);
+    return NextResponse.json(
+      { error: 'Internal Server Error' },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * DELETE /api/conversations
+ * Clears all conversations and messages for the authenticated user.
+ */
+export async function DELETE() {
+  try {
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    const userObjectId = new ObjectId(sessionUser.id);
+    const conversationsCollection = await getConversationsCollection();
+    const chatMessagesCollection = await getChatMessagesCollection();
+
+    // Find all conversation IDs for this user
+    const userConvs = await conversationsCollection
+      .find({ userId: userObjectId })
+      .project({ _id: 1 })
+      .toArray();
+
+    const convIds = userConvs.map((c) => c._id);
+
+    if (convIds.length > 0) {
+      // Delete all messages belonging to these conversations
+      await chatMessagesCollection.deleteMany({
+        conversationId: { $in: convIds },
+      });
+
+      // Delete all conversations
+      await conversationsCollection.deleteMany({
+        userId: userObjectId,
+      });
+    }
+
+    return NextResponse.json({
+      success: true,
+      deletedCount: convIds.length,
+    });
+  } catch (error) {
+    console.error('Error clearing all conversations:', (error as Error).message);
     return NextResponse.json(
       { error: 'Internal Server Error' },
       { status: 500 }

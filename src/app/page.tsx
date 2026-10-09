@@ -170,6 +170,8 @@ export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeNav, setActiveNav] = useState('services');
   const [isChatOpen, setIsChatOpen] = useState(false);
+  // RAG session ID — keeps the Python backend's conversation history alive across turns
+  const [ragSessionId, setRagSessionId] = useState<string | null>(null);
 
   // Guards language-preference fetches from overwriting a newer manual toggle
   const langChangeSeqRef = useRef(0);
@@ -262,6 +264,7 @@ export default function Home() {
       setLanguage('en'); // Reset to default — never leak User A's language to next user
       setHistoryOpen(false);
       setConversationId(null);
+      setRagSessionId(null);
       setMessages([]);
       setIsChatOpen(false);
     }
@@ -276,6 +279,7 @@ export default function Home() {
   const handleNewChat = () => {
     setMessages([]);
     setConversationId(null);
+    setRagSessionId(null);
     setLastMatchedSourceId(null);
     setInput('');
     setIsChatOpen(true);
@@ -314,7 +318,11 @@ export default function Home() {
           text: string;
           sourceName?: string;
           sourceUrl?: string;
-          retrievalMethod?: 'live_fetch' | 'live_fetch_with_cached_context' | 'cached_official_fallback' | 'unmatched_default';
+          schemeName?: string;
+          sourceType?: string;
+          confidence?: string;
+          grounded?: boolean;
+          retrievalMethod?: any;
           isSupported?: boolean;
           serviceId?: string;
         }) => ({
@@ -323,11 +331,16 @@ export default function Home() {
           text: m.text,
           sourceName: m.sourceName,
           sourceUrl: m.sourceUrl,
+          schemeName: m.schemeName,
+          sourceType: m.sourceType || (m.sender === 'assistant' ? 'rag_grounded' : undefined),
+          confidence: m.confidence,
+          grounded: m.grounded,
           retrievalMethod: m.retrievalMethod,
-          isSupported: m.isSupported,
+          isSupported: m.isSupported !== false,
         }));
 
         setConversationId(data.conversation.id);
+        setRagSessionId(data.conversation.id);
         setMessages(loadedMessages);
 
         const lastAssistant = [...data.messages].reverse().find((m: { sender: string; serviceId?: string }) => m.sender === 'assistant');
@@ -422,6 +435,8 @@ export default function Home() {
           lastMatchedSourceId,
           history: messages,
           conversationId: targetConvId,
+          // Send back the RAG session ID so Python backend can continue conversation history
+          ragSessionId: ragSessionId || undefined,
         }),
       });
 
@@ -465,6 +480,8 @@ export default function Home() {
 
             if (data.type === 'metadata') {
               if (data.conversationId) setConversationId(data.conversationId);
+              // Capture the RAG session ID to send back on the next turn
+              if (data.ragSessionId) setRagSessionId(data.ragSessionId);
               setMessages((prev) =>
                 prev.map((m) =>
                   m.id === assistantMsgId
@@ -472,8 +489,18 @@ export default function Home() {
                       ...m,
                       sourceName: data.officialSource,
                       sourceUrl: data.sourceUrl,
+                      schemeName: data.schemeName,
+                      lastVerifiedAt: data.lastVerifiedAt,
+                      sourceType: data.sourceType,
                       retrievalMethod: data.retrievalMethod,
                       isSupported: data.isSupported !== false,
+                      grounded: data.grounded,
+                      confidence: data.confidence,
+                      schemes: data.schemes,
+                      evidenceUsed: data.evidenceUsed,
+                      totalResults: data.totalResults,
+                      ragSessionId: data.ragSessionId,
+                      limitations: data.limitations,
                     }
                     : m
                 )
@@ -586,6 +613,7 @@ export default function Home() {
             inputRef={inputRef}
             onNewChat={handleNewChat}
             onBackToHome={handleBackToHome}
+            onToggleHistory={() => setHistoryOpen(!historyOpen)}
           />
         )}
       </main>
@@ -600,6 +628,7 @@ export default function Home() {
         onSelectConversation={handleSelectConversation}
         onNewChat={handleNewChat}
         onConversationDeleted={handleConversationDeleted}
+        onOpenAuthModal={() => setAuthModalOpen(true)}
         language={language}
         refreshTrigger={historyRefreshKey}
       />
